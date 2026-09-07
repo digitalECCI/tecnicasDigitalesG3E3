@@ -13,12 +13,13 @@
 
 Indice:
 
-1. [Documentación](#documentación-de-los-circuitos-implementados-implementado)
-2. [Simulaciones](#simulaciones)
-3. [Evidencias de implementación](#evidencias-de-implementación)
-4. [Preguntas](#preguntas)
-5. [Conclusiones](#conclusiones)
-6. [Referencias](#referencias)
+1. [Compuertas](#documentación-de-los-circuitos-implementados-implementado)
+2. [Verificador de números primos](#simulaciones)
+3. [Sumador con acarreo](#evidencias-de-implementación)
+4. [Implementación en FPGA](#preguntas)
+5. [Resultados](#conclusiones)
+6. [Conclusiones](#conclusiones)
+7. [Referencias](#referencias)
 
 ## Documentación del diseño implementado
 En esta práctica se diseñaron circuitos de lógica combinacional en Verilog, a partir del análisis de tablas de verdad y de las expresiones booleanas asociadas.
@@ -209,7 +210,7 @@ El funcionamiento del detector de números primos fue comprobado mediante simula
 
 ![Simulación de numros primos](evidencias/NUMEROS_PRIMOS.png)
 
-## 3. Sumador de 4 bit
+## 3. Sumador con acarreo
 
 Un sumador completo de un bit posee tres entradas:
 
