@@ -190,7 +190,7 @@ La función lógica implementada fue:
 P = (~A & B) | (~A & C) | (B & C)
 ```
 
-Implementación en Verilog:
+Codificación en código Verilog:
 
 ```verilog
 module primos(
@@ -207,9 +207,9 @@ endmodule
 
 El funcionamiento del detector de números primos fue comprobado mediante simulación, verificando los ocho posibles valores de entrada.
 
-![Simulación de compuertas lógicas](evidencias/NUMEROS_PRIMOS.png)
+![Simulación de numros primos](evidencias/NUMEROS_PRIMOS.png)
 
-## 3. Sumador de 1 bit
+## 3. Sumador de 4 bit
 
 Un sumador completo de un bit posee tres entradas:
 
@@ -266,17 +266,59 @@ endmodule
 
 El sumador completo fue verificado mediante simulación para las ocho combinaciones posibles de sus entradas.
 
-![Simulación de compuertas lógicas](evidencias/Sumador%20de%201%20bit.jpeg)
+![Simulación de SUMADOR CON ACARREO](evidencias/SUMADOR_CON_ACARREO.png)
+---
+
+# 4. Implementación en FPGA
+
+Tras validar los diseños mediante simulación, los circuitos se implementaron en una tarjeta FPGA empleando el entorno de desarrollo Quartus. Para la asignación correcta de pines, se consultó el manual de la placa con FPGA Altera MAX 10 (10M50DAF484C7G), configurando los switches como entradas (señales A, B y C) y los LEDs como salidas.
+
+Esta implementación en hardware permitió verificar físicamente el correcto funcionamiento de las compuertas lógicas, del detector de números primos y del sumador.
+
+### Evidencias de implementación
+
+En esta sección se incorporan las evidencias obtenidas durante la implementación y demostración del funcionamiento de los circuitos en FPGA.
+
+[Ver implementación de las Compuertas lógicas en FPGA](https://youtu.be/MM3MyO3RRKw?si=GQfy_rpKzAkGBrPl)
+
+[Ver implementación de Números Primos en FPGA](https://youtu.be/nTzB3nlsrXE?si=l7XFbt7ubSY0wZQI)
+
+[Ver implementación de Sumador de bit con acarreo Primos en FPGA](https://youtu.be/GsIWBzj9ANs?si=Bp2-Y4NsRiLd-1NU)
+
 ---
 
 
+# 5. Resultados
+
+A partir de las simulaciones realizadas, se verificó que los circuitos diseñados exhiben el comportamiento esperado según sus respectivas tablas de verdad.
+
+Las compuertas lógicas NOT, AND, OR, XOR y XNOR respondieron de manera correcta para todas las combinaciones de entrada evaluadas.
+
+El detector de números primos identificó adecuadamente los valores 2, 3, 5 y 7 dentro del rango de números representables con tres bits.
+
+Por su parte, el sumador generó correctamente tanto la salida de suma como el acarreo y las dos salidas correspondiente en lops leds de la tarjeta FPGA para las ocho combinaciones posibles de sus entradas.
+
+La implementación en FPGA permitió validar el funcionamiento de los diseños más allá del entorno de simulación, estableciendo una correspondencia directa entre la descripción en HDL y su operación en hardware..
+
+---
+## 6. Conclusiones
+* Se reforzaron los conceptos fundamentales de lógica combinacional y el funcionamiento de las compuertas lógicas básicas (NOT, AND, OR, XOR y XNOR).
+
+* Se aprendió a describir circuitos digitales en Verilog, empleando primitivas y descripciones estructurales para modelar hardware destinado a implementación en FPGA.
+
+* Se evidenció la importancia de las tablas de verdad y de los métodos de reducción booleana para obtener las ecuaciones de salida que permiten verificar el comportamiento esperado de un circuito combinacional.
+
+* Se diseñó e implementó un circuito capaz de detectar números primos (2, 3, 5 y 7) representados mediante tres bits.
+
+* Se comprendió el funcionamiento de un sumador completo de 1 bit con acarreo, visualizando la relación entre el resultado de la suma y la señal de acarreo de salida.
+
+La implementación en FPGA permitió validar experimentalmente los diseños desarrollados y establecer una correspondencia directa entre la simulación y el comportamiento real del hardware.
 
 
-## Evidencias de implementación
+---
+# 7. Referencias
 
-
-## Conclusiones
-
-
-## Referencias
-
+* Material de clase de la asignatura Técnicas Digitales, Universidad ECCI.
+* Documentación y material proporcionado para el Laboratorio 01: Introducción a lógica combinacional.
+* IEEE Standard for Verilog Hardware Description Language.
+* Manual de usuario DE10-Lite Cost-effective Max 10 board
