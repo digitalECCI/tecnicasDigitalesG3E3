@@ -2,9 +2,12 @@
 # Lab01 - Sumador/Restador de 4 bits
 
 # Integrantes
-    * [<!-- Remplace aqui nombre 1. -->](<!-- Remplace aqui link de usario 1 de github -->) 
-    * [<!-- Remplace aqui nombre 2. -->](<!-- Remplace aqui link de usario 2 de github -->) 
-    * [<!-- Remplace aqui nombre 3. -->](<!-- Remplace aqui link de usario 3 de github -->) 
+     * [Cristian Santiago Alfonso Valderrama](https://github.com/CristianAlfonso-ecci) 
+    * [Fredi Alexander Melo Prada]
+    (https://github.com/Fredi-melo-ecci) 
+    * [Fabiam Acevedo]
+    (https://github.com/Fabiam-Acevedo-ECCI) 
+    
 # Informe
 
 Indice:
