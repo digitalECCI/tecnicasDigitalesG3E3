@@ -23,135 +23,56 @@ Indice:
 En esta práctica se diseñaron circuitos de lógica combinacional en Verilog, a partir del análisis de tablas de verdad y de las expresiones booleanas asociadas.
 
 Desarrollo de la práctica
-Primero se modelaron las compuertas básicas NOT, AND, OR, XOR y XNOR, y se validó su funcionamiento mediante simulación.
+Se implementó como base el sumador completo de 1 bit realizado en la anterior práctica de labratorio, este sumador de un bit con entradas A, 𝐵 y 𝐶in, y salidas de suma S y acarreo Cout.
 
-Luego se diseñó un circuito combinacional que detecta números primos codificados en 3 bits, evaluando todas las combinaciones posibles de entrada.
+Un sumador completo de un bit posee tres entradas:
 
-Por último, se implementó un sumador completo de 1 bit con entradas A, 𝐵 y 𝐶in, y salidas de suma S y acarreo Cout.
+* `A`: primer bit de entrada.
+* `B`: segundo bit de entrada.
+* `Cin`: acarreo de entrada.
+
+Y dos salidas:
+
+* `S`: resultado de la suma.
+* `Cout`: acarreo de salida.
+
+### Tabla de verdad
+
+| A | B | Cin | Cout | S |
+| - | - | --- | ---- | - |
+| 0 | 0 | 0   | 0    | 0 |
+| 0 | 0 | 1   | 0    | 1 |
+| 0 | 1 | 0   | 0    | 1 |
+| 0 | 1 | 1   | 1    | 0 |
+| 1 | 0 | 0   | 0    | 1 |
+| 1 | 0 | 1   | 1    | 0 |
+| 1 | 1 | 0   | 1    | 0 |
+| 1 | 1 | 1   | 1    | 1 |
+
+Las expresiones utilizadas fueron:
+
+```text
+S = Ci ^ ( A ^ B);
+Co = ( B & Ci ) | A & ( B | Ci);
+```
 
 Todos los módulos fueron simulados para verificar su correcto comportamiento lógico y, posteriormente, se sintetizaron e implementaron en una FPGA usando Quartus, comprobando su operación en hardware.
-### 1. Compuertas
 
-#### 1.1 Compuerta AND
-La compuerta AND produce un `1` únicamente cuando todas sus entradas son `1`.
+## 1. Sumador de 4 bit
 
-| A | B | S |
-| - | - | - |
-| 0 | 0 | 0 |
-| 0 | 1 | 0 |
-| 1 | 0 | 0 |
-| 1 | 1 | 1 |
+### 1.1 Descripción del sumador de 4 bits en Verilog
 
-Codificación en código Verilog:
+El código presentado corresponde a un sumador binario de 4 bits implementado en Verilog. Su función consiste en sumar dos operandos binarios de 4 bits, denominados \(A\) y \(B\), y generar como resultado una salida de suma de 4 bits \(SO\) junto con un bit de acarreo de salida \(CO\).
 
-```verilog
-module and_gate(
-    input A,
-    input B,
-    output S
-);
+El módulo principal bajo prueba es `sumadorfour.v`, al cual se conectan las siguientes señales:
 
-and (S, A, B);
+- \(A[3:0]\): primer número binario de 4 bits.  
+- \(B[3:0]\): segundo número binario de 4 bits.  
+- \(CI\): acarreo de entrada.  
+- \(SO[3:0]\): resultado de la suma.  
+- \(CO\): acarreo de salida.  
 
-endmodule
-```
-
-#### 1.2 Compuerta NOT
-
-La compuerta NOT tiene una entrada y una salida. Su función es invertir el valor lógico de la entrada; en el ejercicicio se nego la entrada A.
-
-| A | S |
-| - | - |
-| 0 | 1 |
-| 1 | 0 |
-
-Codificación en código Verilog:
-
-```verilog
-module not_gate(
-    input A,
-    output S
-);
-
-not (S, A);
-
-endmodule
-```
-
-### 1.3. Compuerta OR
-
-La compuerta OR produce un `1` cuando al menos una de sus entradas es `1`.
-
-| A | B | S |
-| - | - | - |
-| 0 | 0 | 0 |
-| 0 | 1 | 1 |
-| 1 | 0 | 1 |
-| 1 | 1 | 1 |
-
-Codificación en código Verilog:
-
-```verilog
-module or_gate(
-    input A,
-    input B,
-    output S
-);
-
-or (S, A, B);
-
-endmodule
-```
-
-### 1.4. Compuerta XOR
-
-La compuerta XOR produce un `1` cuando sus entradas son diferentes.
-
-| A | B | S |
-| - | - | - |
-| 0 | 0 | 0 |
-| 0 | 1 | 1 |
-| 1 | 0 | 1 |
-| 1 | 1 | 0 |
-
-Codificación en código Verilog:
-
-```verilog
-module xor_gate(
-    input A,
-    input B,
-    output S
-);
-
-xor (S, A, B);
-
-endmodule
-```
-
-### 1.5. Compuerta XNOR
-
-La compuerta XNOR produce un `1` cuando sus entradas son iguales.
-
-| A | B | S |
-| - | - | - |
-| 0 | 0 | 1 |
-| 0 | 1 | 0 |
-| 1 | 0 | 0 |
-| 1 | 1 | 1 |
-
-Codificación en código Verilog:
-
-```verilog
-module xnor_gate(
-    input A,
-    input B,
-    output S
-);
-
-xnor (S, A, B);
-
-endmodule
-```
+El banco de pruebas (`tb_sumadorfour.v`) emplea dos ciclos `for` el primero se demonino con una variable `i` y el segundo con una variable `j` para recorrer de manera automática todas las combinaciones posibles de los operandos \(A\) y \(B\), desde \(0000\) hasta \(1111\). Tras asignar cada combinación de entradas, se introduce un retardo de 10 ns mediante `#10`, lo cual permite observar y verificar el comportamiento del sumador para cada caso.
 
 ### Evidencia de simulación
 
