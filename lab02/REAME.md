@@ -213,9 +213,11 @@ Antes de llevar a cabo la implementación física, el diseño se sometió a un p
 
 Mediante esta simulación fue posible evaluar distintas combinaciones de las entradas `A`, `B` y `Ci`, comprobando que las salidas `So` y `Co` coincidieran con los resultados esperados según la operación de suma binaria.
 
-![Simulación de Sumador_gtkwave.png](evidencias/Sumador_gtkwave.png)
-![Simulación de Sumador_gtkwave_15.png](evidencias/Sumador_gtkwave_15.png)
-![Simulación de Sumador_gtkwave_8.png](evidencias/Sumador_gtkwave_8.png)
+![Simulación de Sumador_gtkwave.png](   Evidencias/Sumador_gtkwave.png)
+
+![Simulación de Sumador_gtkwave_15.png](Evidencias/Sumador_gtkwave_15.png)
+
+![Simulación de Sumador_gtkwave_8.png](Evidencias/Sumador_gtkwave_8.png)
 --
 
 # 3._Implementación_en_FPGA
