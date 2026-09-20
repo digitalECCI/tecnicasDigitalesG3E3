@@ -1,6 +1,7 @@
 # Lab02 - Sumador de 4 bits
 
 # Integrantes
+
     * [Cristian Santiago Alfonso Valderrama]
     (https://github.com/CristianAlfonso-ecci) 
     * [Fredi Alexander Melo Prada]
@@ -13,13 +14,14 @@
 Indice:
 
 1. [Sumador de 4 bit](#documentación-de-los-circuitos-implementados-implementado)
-2. [Simulación](#simulaciones)
-3. [Implementación en FPGA](#preguntas)
-5. [Resultados](#Resultados)
-6. [Conclusiones](#conclusiones)
-7. [Referencias](#referencias)
+2. [Simulación](#2.Simulaciones)
+3. [Implementación en FPGA](#3._Implementación_en_FPGA)
+4. [Resultados](#Resultados)
+5. [Conclusiones](#conclusiones)
+6. [Referencias](#referencias)
 
 ## Documentación del diseño implementado
+
 En esta práctica se diseñaron circuitos de lógica combinacional en Verilog, a partir del análisis de tablas de verdad y de las expresiones booleanas asociadas.
 
 Desarrollo de la práctica
@@ -66,130 +68,157 @@ El código presentado corresponde a un sumador binario de 4 bits implementado en
 
 El módulo principal bajo prueba es `sumadorfour.v`, al cual se conectan las siguientes señales:
 
-- \(A[3:0]\): primer número binario de 4 bits.  
-- \(B[3:0]\): segundo número binario de 4 bits.  
-- \(CI\): acarreo de entrada.  
-- \(SO[3:0]\): resultado de la suma.  
-- \(CO\): acarreo de salida.  
+* \(A[3:0]\): primer número binario de 4 bits.  
+* \(B[3:0]\): segundo número binario de 4 bits.  
+* \(CI\): acarreo de entrada.  
+* \(SO[3:0]\): resultado de la suma.  
+* \(CO\): acarreo de salida.  
 
 El banco de pruebas (`tb_sumadorfour.v`) emplea dos ciclos `for` el primero se demonino con una variable `i` y el segundo con una variable `j` para recorrer de manera automática todas las combinaciones posibles de los operandos \(A\) y \(B\), desde \(0000\) hasta \(1111\). Tras asignar cada combinación de entradas, se introduce un retardo de 10 ns mediante `#10`, lo cual permite observar y verificar el comportamiento del sumador para cada caso.
 
-### Evidencia de simulación
+### Evidencias de simulación
 
-Las tablas de verdad fueron verificadas mediante simulación ejecutando GTKWAVE (Verilog) de los respectivos módulos.    
+Las tablas de verdad fueron verificadas mediante simulación ejecutando GTKWAVE (Verilog) de los respectivos módulos.
 
-![Simulación de compuertas lógicas](evidencias/Compuerta_AND.png)
-![Simulación de compuertas lógicas](evidencias/Compuerta_NOT.png)
-![Simulación de compuertas lógicas](evidencias/Compuerta_OR.png)
-![Simulación de compuertas lógicas](evidencias/Compuerta_XNOR.png)
-![Simulación de compuertas lógicas](evidencias/Compuerta_XOR.png)
 ---
-
-## 2. Verificador de números primos     
-
-Se diseñó un circuito combinacional capaz de determinar si un número binario de tres bits corresponde a un número primo.
-
-Los números representables con tres bits son:
-
-| A | B | C | Decimal | Primo |
-| - | - | - | ------: | ----- |
-| 0 | 0 | 0 |       0 | 0     |
-| 0 | 0 | 1 |       1 | 0     |
-| 0 | 1 | 0 |       2 | 1     |
-| 0 | 1 | 1 |       3 | 1     |
-| 1 | 0 | 0 |       4 | 0     |
-| 1 | 0 | 1 |       5 | 1     |
-| 1 | 1 | 0 |       6 | 0     |
-| 1 | 1 | 1 |       7 | 1     |
-
-Por lo tanto, la salida debe activarse para los valores 2, 3, 5 y 7.
-
-La función lógica implementada fue:
-
-```text
-P = (~A & B) | (~A & C) | (B & C)
-```
-
 Codificación en código Verilog:
 
 ```verilog
-module primos(
-    input [2:0] A,
-    output S
-);
+`include "sumador.v" // llamada al módulo sumador de un bit
 
-//BOOLEANA: S = ~AB + AC
-assign S = (~A[2]&A[1])|(A[2]&A[0]);
+module sum_4bit (
+    input  wire [3:0] A,
+    input  wire [3:0] B,
+    input  wire       Ci,
+    output wire [3:0] So,
+    output wire       Co
+);
+    wire c0, c1, c2;  
+
+    sumador bit0 (
+        .A  (A[0]),
+        .B  (B[0]),
+        .Ci (Ci),
+        .So (So[0]),
+        .Co (c0)       
+    );
+
+    sumador bit1 (
+        .A  (A[1]),
+        .B  (B[1]),
+        .Ci (c0),
+        .So (So[1]),
+        .Co (c1)      
+    );
+
+    sumador bit2 (
+        .A  (A[2]),
+        .B  (B[2]),
+        .Ci (c1),
+        .So (So[2]),
+        .Co (c2)      
+    );
+
+    sumador bit3 (
+        .A  (A[3]),
+        .B  (B[3]),
+        .Ci (c2),
+        .So (So[3]),
+        .Co (Co)      
+    );
+
 endmodule
 ```
 
-### Evidencia de simulación
-
-El funcionamiento del detector de números primos fue comprobado mediante simulación, verificando los ocho posibles valores de entrada.
-
-![Simulación de numros primos](evidencias/NUMEROS_PRIMOS.png)
-
-## 3. Sumador con acarreo
-
-Un sumador completo de un bit posee tres entradas:
-
-* `A`: primer bit de entrada.
-* `B`: segundo bit de entrada.
-* `Cin`: acarreo de entrada.
-
-Y dos salidas:
-
-* `S`: resultado de la suma.
-* `Cout`: acarreo de salida.
-
-### Tabla de verdad
-
-| A | B | Cin | Cout | S |
-| - | - | --- | ---- | - |
-| 0 | 0 | 0   | 0    | 0 |
-| 0 | 0 | 1   | 0    | 1 |
-| 0 | 1 | 0   | 0    | 1 |
-| 0 | 1 | 1   | 1    | 0 |
-| 1 | 0 | 0   | 0    | 1 |
-| 1 | 0 | 1   | 1    | 0 |
-| 1 | 1 | 0   | 1    | 0 |
-| 1 | 1 | 1   | 1    | 1 |
-
-Las expresiones utilizadas fueron:
-
-```text
-S = Ci ^ ( A ^ B);
-Co = ( B & Ci ) | A & ( B | Ci);
-```
-
-Implementación en Verilog:
+Codificación en código Verilog tb_sumadorfour:
 
 ```verilog
-module sumador(
-    
-    input A,
-    input B,
-    input Ci,
+// tb_sumadorfour.v
+`include "sumadorfour.v"
+`timescale 1ns/1ps
 
-    output S,
-    output Co
+module tb_sumadorfour;
 
-);
+    reg  [3:0] A, B;
+    reg        Ci;
+    wire [3:0] So;
+    wire       Co;
 
-assign S = Ci ^ ( A ^ B);
-assign Co = ( B & Ci ) | A & ( B | Ci);
+    integer i, j;
+
+    sum_4bit uut (
+        .A  (A),
+        .B  (B),
+        .Ci (Ci),
+        .So (So),
+        .Co (Co)
+    );
+
+    initial begin
+        $dumpfile("tb_sumadorfour.vcd");
+        $dumpvars(0, tb_sumadorfour);
+     // ciclos de prueba for   
+        Ci = 0;
+        for (i = 0; i < 16; i = i + 1) begin
+            for (j = 0; j < 16; j = j + 1) begin
+                    A = i;
+                    B = j;
+                    #10;
+            end
+        end
+        $finish;
+    end
 
 endmodule
 ```
 
-### Evidencia de simulación
-
-El sumador completo fue verificado mediante simulación para las ocho combinaciones posibles de sus entradas.
-
-![Simulación de SUMADOR CON ACARREO](evidencias/SUMADOR_CON_ACARREO.png)
 ---
 
-# 4. Implementación en FPGA
+## 2. Verificador de números primos
+
+## Funcionamiento del sumador de 4 bits
+
+El funcionamiento del circuito se basa en cuatro etapas conectadas de manera secuencial, donde cada etapa corresponde a un sumador completo de 1 bit.
+
+El primer sumador procesa los bits menos significativos `A[0]` y `B[0]`, junto con el acarreo de entrada `Ci`. El acarreo generado por esta primera etapa se conecta como entrada de acarreo al segundo sumador.
+
+El segundo sumador procesa `A[1]` y `B[1]` y recibe el acarreo proveniente de la etapa anterior. Este proceso se repite de forma cascada hasta llegar al cuarto sumador, que opera sobre los bits más significativos `A[3]` y `B[3]`.
+
+El último módulo genera el bit de suma `So[3]` y el acarreo final `Co`, completando así la operación de suma de los dos números binarios de 4 bits. Esta conexión en cascada permite realizar la suma completa de manera correcta para cualquier combinación de entradas.
+
+### Ejemplo de operación
+
+Por ejemplo, para las siguientes entradas:
+
+* `A = 0111`  
+* `B = 0001`  
+
+Se obtiene: 1000
+
+Es decir:
+
+```text
+0111₂ + 0001₂ = 1000₂
+```
+
+En decimal:
+
+```text
+7 + 1 = 8
+```
+
+# 2.Simulaciones
+
+Antes de llevar a cabo la implementación física, el diseño se sometió a un proceso de simulación por GTKWAVE con el fin de verificar el comportamiento lógico del circuito.
+
+Mediante esta simulación fue posible evaluar distintas combinaciones de las entradas `A`, `B` y `Ci`, comprobando que las salidas `So` y `Co` coincidieran con los resultados esperados según la operación de suma binaria.
+
+![Simulación de Sumador_gtkwave.png](evidencias/Sumador_gtkwave.png)
+![Simulación de Sumador_gtkwave_15.png](evidencias/Sumador_gtkwave_15.png)
+![Simulación de Sumador_gtkwave_8.png](evidencias/Sumador_gtkwave_8.png)
+--
+
+# 3._Implementación_en_FPGA
 
 Tras validar los diseños mediante simulación, los circuitos se implementaron en una tarjeta FPGA empleando el entorno de desarrollo Quartus. Para la asignación correcta de pines, se consultó el manual de la placa con FPGA Altera MAX 10 (10M50DAF484C7G), configurando los switches como entradas (señales A, B y C) y los LEDs como salidas.
 
@@ -199,46 +228,38 @@ Esta implementación en hardware permitió verificar físicamente el correcto fu
 
 En esta sección se incorporan las evidencias obtenidas durante la implementación y demostración del funcionamiento de los circuitos en FPGA.
 
-[Ver implementación de las Compuertas lógicas en FPGA](https://youtu.be/MM3MyO3RRKw?si=GQfy_rpKzAkGBrPl)
-
-[Ver implementación de Números Primos en FPGA](https://youtu.be/nTzB3nlsrXE?si=l7XFbt7ubSY0wZQI)
-
-[Ver implementación de Sumador de bit con acarreo Primos en FPGA](https://youtu.be/GsIWBzj9ANs?si=Bp2-Y4NsRiLd-1NU)
+[Ver implementación de sumador de 4 bit en FPGA](https://youtu.be/MM3MyO3RRKw?si=GQfy_rpKzAkGBrPl)
 
 ---
 
+# 4. Resultados
 
-# 5. Resultados
+A partir de las pruebas realizadas, se verificó el correcto funcionamiento del sumador de 4 bits.
 
-A partir de las simulaciones realizadas, se verificó que los circuitos diseñados exhiben el comportamiento esperado según sus respectivas tablas de verdad.
+La implementación permitió comprobar el comportamiento del diseño en tres etapas:
 
-Las compuertas lógicas NOT, AND, OR, XOR y XNOR respondieron de manera correcta para todas las combinaciones de entrada evaluadas.
+* **Diseño modular:** se construyó el sumador de 4 bits mediante la reutilización del módulo sumador de 1 bit.  
+* **Simulación:** se verificó previamente el comportamiento lógico del circuito.  
+* **Implementación física:** el diseño fue programado en la FPGA mediante Quartus y se comprobó su funcionamiento utilizando los interruptores y LED de la tarjeta.
 
-El detector de números primos identificó adecuadamente los valores 2, 3, 5 y 7 dentro del rango de números representables con tres bits.
-
-Por su parte, el sumador generó correctamente tanto la salida de suma como el acarreo y las dos salidas correspondiente en lops leds de la tarjeta FPGA para las ocho combinaciones posibles de sus entradas.
-
-La implementación en FPGA permitió validar el funcionamiento de los diseños más allá del entorno de simulación, estableciendo una correspondencia directa entre la descripción en HDL y su operación en hardware..
+La metodología empleada permitió demostrar que un circuito digital puede construirse de manera modular, a partir de la reutilización de bloques previamente desarrollados.
 
 ---
+
 ## 6. Conclusiones
-* Se reforzaron los conceptos fundamentales de lógica combinacional y el funcionamiento de las compuertas lógicas básicas (NOT, AND, OR, XOR y XNOR).
 
-* Se aprendió a describir circuitos digitales en Verilog, empleando primitivas y descripciones estructurales para modelar hardware destinado a implementación en FPGA.
-
-* Se evidenció la importancia de las tablas de verdad y de los métodos de reducción booleana para obtener las ecuaciones de salida que permiten verificar el comportamiento esperado de un circuito combinacional.
-
-* Se diseñó e implementó un circuito capaz de detectar números primos (2, 3, 5 y 7) representados mediante tres bits.
-
-* Se comprendió el funcionamiento de un sumador completo de 1 bit con acarreo, visualizando la relación entre el resultado de la suma y la señal de acarreo de salida.
-
-La implementación en FPGA permitió validar experimentalmente los diseños desarrollados y establecer una correspondencia directa entre la simulación y el comportamiento real del hardware.
-
+- La simulación permitió validar el comportamiento lógico del circuito antes de proceder con su implementación física en hardware.
+- Se implementó un sumador de 4 bits a partir de cuatro módulos sumadores de 1 bit interconectados mediante una cadena de acarreo.
+- La instanciación de módulos posibilitó reutilizar el diseño previamente desarrollado, facilitando la construcción de un sistema digital de mayor complejidad.
+- Mediante el uso de Quartus, el diseño en HDL se sintetizó y se cargó en la FPGA, lo que permitió comprobar experimentalmente su correcto funcionamiento.
+- La configuración de los interruptores como entradas y de los LED como salidas posibilitó visualizar de forma directa los resultados de las operaciones efectuadas por el sumador.
+- Con base en la disposición de los LED en la FPGA, se reforzó la interpretación de los pesos binarios (2⁰, 2¹, 2², 2³), lo que permitió relacionar correctamente los bits de entrada de A y B con el resultado esperado de la suma.
 
 ---
+
 # 7. Referencias
 
 * Material de clase de la asignatura Técnicas Digitales, Universidad ECCI.
-* Documentación y material proporcionado para el Laboratorio 01: Introducción a lógica combinacional.
+* Documentación y material proporcionado para el Laboratorio 02: sumador 4bit.
 * IEEE Standard for Verilog Hardware Description Language.
 * Manual de usuario DE10-Lite Cost-effective Max 10 board
