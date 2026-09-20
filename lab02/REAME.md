@@ -1,6 +1,6 @@
 # Lab02 - Sumador de 4 bits
 
-# Integrantes
+## Integrantes
 
     * [Cristian Santiago Alfonso Valderrama]
     (https://github.com/CristianAlfonso-ecci) 
@@ -9,16 +9,16 @@
     * [Fabiam Acevedo]
     (https://github.com/Fabiam-Acevedo-ECCI) 
 
-# Informe
+## Informe
 
 Indice:
 
-1. [Sumador de 4 bit](#documentación-de-los-circuitos-implementados-implementado)
-2. [Simulación](#2.Simulaciones)
-3. [Implementación en FPGA](#3._Implementación_en_FPGA)
-4. [Resultados](#Resultados)
-5. [Conclusiones](#conclusiones)
-6. [Referencias](#referencias)
+1. [Sumador de 4 bit](#1-sumador-de-4-bit)
+2. [Simulaciones](#2-simulaciones)
+3. [Implementación en FPGA](#3-implementación-en-fpga)
+4. [Resultados](#4-resultados)
+5. [Conclusiones](#5-conclusiones)
+6. [Referencias](#6-referencias)
 
 ## Documentación del diseño implementado
 
@@ -53,10 +53,8 @@ Y dos salidas:
 
 Las expresiones utilizadas fueron:
 
-```text
-S = Ci ^ ( A ^ B);
-Co = ( B & Ci ) | A & ( B | Ci);
-```
+    S = Ci ^ ( A ^ B);
+    Co = ( B & Ci ) | A & ( B | Ci);
 
 Todos los módulos fueron simulados para verificar su correcto comportamiento lógico y, posteriormente, se sintetizaron e implementaron en una FPGA usando Quartus, comprobando su operación en hardware.
 
@@ -174,8 +172,6 @@ endmodule
 
 ---
 
-## 2. Verificador de números primos
-
 ## Funcionamiento del sumador de 4 bits
 
 El funcionamiento del circuito se basa en cuatro etapas conectadas de manera secuencial, donde cada etapa corresponde a un sumador completo de 1 bit.
@@ -207,7 +203,7 @@ En decimal:
 7 + 1 = 8
 ```
 
-# 2.Simulaciones
+## 2. Simulaciones
 
 Antes de llevar a cabo la implementación física, el diseño se sometió a un proceso de simulación por GTKWAVE con el fin de verificar el comportamiento lógico del circuito.
 
@@ -218,9 +214,9 @@ Mediante esta simulación fue posible evaluar distintas combinaciones de las ent
 ![Simulación de Sumador_gtkwave_15.png](Evidencias/Sumador_gtkwave_15.png)
 
 ![Simulación de Sumador_gtkwave_8.png](Evidencias/Sumador_gtkwave_8.png)
---
 
-# 3._Implementación_en_FPGA
+
+## 3. Implementación en FPGA
 
 Tras validar los diseños mediante simulación, los circuitos se implementaron en una tarjeta FPGA empleando el entorno de desarrollo Quartus. Para la asignación correcta de pines, se consultó el manual de la placa con FPGA Altera MAX 10 (10M50DAF484C7G), configurando los switches como entradas (señales A, B y C) y los LEDs como salidas.
 
@@ -230,11 +226,11 @@ Esta implementación en hardware permitió verificar físicamente el correcto fu
 
 En esta sección se incorporan las evidencias obtenidas durante la implementación y demostración del funcionamiento de los circuitos en FPGA.
 
-[Ver implementación de sumador de 4 bit en FPGA](https://youtu.be/MM3MyO3RRKw?si=GQfy_rpKzAkGBrPl)
+[Ver implementación de sumador de 4 bit en FPGA](https://youtube.com/shorts/Qjf_6n3iC6c)
 
 ---
 
-# 4. Resultados
+## 4. Resultados
 
 A partir de las pruebas realizadas, se verificó el correcto funcionamiento del sumador de 4 bits.
 
@@ -248,7 +244,7 @@ La metodología empleada permitió demostrar que un circuito digital puede const
 
 ---
 
-## 6. Conclusiones
+## 5. Conclusiones
 
 - La simulación permitió validar el comportamiento lógico del circuito antes de proceder con su implementación física en hardware.
 - Se implementó un sumador de 4 bits a partir de cuatro módulos sumadores de 1 bit interconectados mediante una cadena de acarreo.
@@ -259,7 +255,7 @@ La metodología empleada permitió demostrar que un circuito digital puede const
 
 ---
 
-# 7. Referencias
+## 6. Referencias
 
 * Material de clase de la asignatura Técnicas Digitales, Universidad ECCI.
 * Documentación y material proporcionado para el Laboratorio 02: sumador 4bit.
