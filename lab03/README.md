@@ -220,86 +220,70 @@ module select (
 endmodule
 ```
 
-Codificación en código Verilog tb_sumadorr:
+Codificación en código Verilog tb_selector:
 
 ```verilog
-// tb_sumadorfour.v
-`include "sumadorfour.v"
-`timescale 1ns/1ps
+`timescale 1ns / 1ps
+`include "sel.v"
 
-module tb_sumadorfour;
+module tb_sel;
+    reg [3:0] A;
+    reg [2:0] B;
+    reg Ci;
+    reg sel;
 
-    reg  [3:0] A, B;
-    reg        Ci;
+    wire [6:0] seg;
     wire [3:0] So;
-    wire       Co;
 
     integer i, j;
 
-    sum_4bit uut (
-        .A  (A),
-        .B  (B),
-        .Ci (Ci),
-        .So (So),
-        .Co (Co)
+    select uut (
+        .A(A),
+        .B(B),
+        .Ci(Ci),
+        .sel(sel),
+        .seg(seg),
+        .So(So)
     );
 
-    initial begin
-        $dumpfile("tb_sumadorfour.vcd");
-        $dumpvars(0, tb_sumadorfour);
-     // ciclos de prueba for   
-        Ci = 0;
-        for (i = 0; i < 16; i = i + 1) begin
-            for (j = 0; j < 16; j = j + 1) begin
-                    A = i;
-                    B = j;
-                    #10;
-            end
-        end
-        $finish;
-    end
+initial begin
+    $dumpfile("tb_sel.vcd");
+    $dumpvars(0,tb_sel);
 
+    for(i=0; i<16; i=i+1) begin
+        for(j=0; j<8; j=j+1) begin
+            A=i;
+            B=j;
+            Ci=0;
+            sel=0;
+            #10;
+        end
+    end
+    for(i=0; i<16; i=i+1) begin
+            A=i;
+            Ci=0;
+            sel=1;
+            #10;
+    end
+end
 endmodule
 ```
 
 ---
 
-## Funcionamiento del sumador de 4 bits
-
-El funcionamiento del circuito se basa en cuatro etapas conectadas de manera secuencial, donde cada etapa corresponde a un sumador completo de 1 bit.
-
-El primer sumador procesa los bits menos significativos `A[0]` y `B[0]`, junto con el acarreo de entrada `Ci`. El acarreo generado por esta primera etapa se conecta como entrada de acarreo al segundo sumador.
-
-El segundo sumador procesa `A[1]` y `B[1]` y recibe el acarreo proveniente de la etapa anterior. Este proceso se repite de forma cascada hasta llegar al cuarto sumador, que opera sobre los bits más significativos `A[3]` y `B[3]`.
-
-El último módulo genera el bit de suma `So[3]` y el acarreo final `Co`, completando así la operación de suma de los dos números binarios de 4 bits. Esta conexión en cascada permite realizar la suma completa de manera correcta para cualquier combinación de entradas.
-
-### Ejemplo de operación
-
-Por ejemplo, para las siguientes entradas:
-
-* `A = 0111`  
-* `B = 0001`  
-
-Se obtiene: 1000
-
-Es decir:
-
-```text
-0111₂ + 0001₂ = 1000₂
-```
-
-En decimal:
-
-```text
-7 + 1 = 8
-```
-
 ## 2. Simulaciones
 
 Antes de llevar a cabo la implementación física, el diseño se sometió a un proceso de simulación por GTKWAVE con el fin de verificar el comportamiento lógico del circuito.
 
-Mediante esta simulación fue posible evaluar distintas combinaciones de las entradas `A`, `B` y `Ci`, comprobando que las salidas `So` y `Co` coincidieran con los resultados esperados según la operación de suma binaria.
+### Resultados esperados en la simulación
+
+En la simulación se observarán dos etapas claramente diferenciadas según el valor de `sel`:
+
+- **Primera etapa (`sel = 0`):** se recorren todas las combinaciones de `A` (0–15) y `B` (0–7), con `Ci = 0`. En cada paso, el módulo `select` toma el resultado de la suma (`res`) y lo envía al display. Por lo tanto, se observará cómo cambian `So` y `seg`, reflejando el resultado de la suma para cada combinación.
+
+- **Segunda etapa (`sel = 1`):** se recorren los valores de `A` (0–15), manteniendo `Ci = 0` y `sel = 1`. Aquí el módulo ignora la suma y envía directamente el valor de `A` al display. En la simulación se verá que `So` coincide exactamente con `A`, y `seg` cambia acorde al dígito decimal correspondiente.
+
+En resumen, la simulación permitirá verificar que el selector funciona correctamente: con `sel = 0` muestra la suma, y con `sel = 1` muestra el valor de `A`.
 
 ![Simulación de Sumador_gtkwave.png](   Evidencias/Sumador_gtkwave.png)
 
