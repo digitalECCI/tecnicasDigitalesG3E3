@@ -71,6 +71,13 @@ De esta forma, la lógica de control se invierte respecto a un display de cátod
 
 El código en Verilog implementa un decodificador que recibe una entrada binaria de 4 bits y, mediante una estructura `case`, asigna a cada valor un patrón de 7 bits para controlar los segmentos del display. Dado que el display es de **ánodo común**, los segmentos se activan con nivel lógico `0` y se apagan con `1`.
 
+---
+PINOUT DISPLAY 7 SEGMENTOS FPGA ALTERA 10 MAX
+![pinout_7_seg_FPGA.png](Evidencias/pinout_7_seg_FPGA.png)
+
+![pinout_7_seg_FPGA.png](Evidencias/LETRAS_DISPLAY_7_SEG.png)
+
+
 ### Evidencias de simulación
 
 Las tablas de verdad fueron verificadas mediante simulación ejecutando GTKWAVE (Verilog) de los respectivos módulos.
@@ -285,11 +292,15 @@ En la simulación se observarán dos etapas claramente diferenciadas según el v
 
 En resumen, la simulación permitirá verificar que el selector funciona correctamente: con `sel = 0` muestra la suma, y con `sel = 1` muestra el valor de `A`.
 
+---
+Sumador
 ![Simulación de Sumador_gtkwave.png](   Evidencias/Sumador_gtkwave.png)
 
-![Simulación de Sumador_gtkwave_15.png](Evidencias/Sumador_gtkwave_15.png)
+Salida del display 7 Segmentos (Decodificador)
+![7_seg.png](Evidencias/7_seg.png)
 
-![Simulación de Sumador_gtkwave_8.png](Evidencias/Sumador_gtkwave_8.png)
+Salida del modulo (Selector) en donde se implmenta los demas modulos anteriormente mencionados.
+![salida_selector.png](Evidencias/salida_selector.png)
 
 
 ## 3. Implementación en FPGA
@@ -302,21 +313,17 @@ Esta implementación en hardware permitió verificar físicamente el correcto fu
 
 En esta sección se incorporan las evidencias obtenidas durante la implementación y demostración del funcionamiento de los circuitos en FPGA.
 
-[Ver implementación de sumador de 4 bit en FPGA](https://youtube.com/shorts/Qjf_6n3iC6c)
+[Ver implementación de decodificador en FPGA con salida en display de 7 segmentos](https://youtube.com/shorts/4XhQkAXjQDo?feature=share)
 
 ---
 
 ## 4. Resultados
 
-A partir de las pruebas realizadas, se verificó el correcto funcionamiento del sumador de 4 bits.
+La simulación del diseño permitió verificar el correcto funcionamiento del decodificador de 4 bits y el módulo selector. Durante la ejecución del testbench, se observó que el display de 7 segmentos mostraba los dígitos esperados según el valor aplicado en las entradas y la posición del interruptor `sel`.
 
-La implementación permitió comprobar el comportamiento del diseño en tres etapas:
+Cuando `sel = 0`, el display mostró el resultado de la suma de `A` y `B`, confirmando que el módulo `select` estaba enviando correctamente el valor de `res` al decodificador. Por otro lado, cuando `sel = 1`, el display mostró directamente el valor de `A`, evidenciando que el selector estaba cambiando la fuente de datos según lo esperado.
 
-* **Diseño modular:** se construyó el sumador de 4 bits mediante la reutilización del módulo sumador de 1 bit.  
-* **Simulación:** se verificó previamente el comportamiento lógico del circuito.  
-* **Implementación física:** el diseño fue programado en la FPGA mediante Quartus y se comprobó su funcionamiento utilizando los interruptores y LED de la tarjeta.
-
-La metodología empleada permitió demostrar que un circuito digital puede construirse de manera modular, a partir de la reutilización de bloques previamente desarrollados.
+La implementación en la FPGA corroboró los resultados obtenidos en simulación. Al manipular los interruptores correspondientes a las entradas `A`, `B` y `sel`, se pudo observar en tiempo real cómo el display actualizaba el dígito mostrado, validando así el comportamiento del circuito tanto en entorno de simulación como en hardware.
 
 ---
 
