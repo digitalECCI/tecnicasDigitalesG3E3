@@ -329,18 +329,23 @@ La implementación en la FPGA corroboró los resultados obtenidos en simulación
 
 ## 5. Conclusiones
 
-- La simulación permitió validar el comportamiento lógico del circuito antes de proceder con su implementación física en hardware.
-- Se implementó un sumador de 4 bits a partir de cuatro módulos sumadores de 1 bit interconectados mediante una cadena de acarreo.
-- La instanciación de módulos posibilitó reutilizar el diseño previamente desarrollado, facilitando la construcción de un sistema digital de mayor complejidad.
-- Mediante el uso de Quartus, el diseño en HDL se sintetizó y se cargó en la FPGA, lo que permitió comprobar experimentalmente su correcto funcionamiento.
-- La configuración de los interruptores como entradas y de los LED como salidas posibilitó visualizar de forma directa los resultados de las operaciones efectuadas por el sumador.
-- Con base en la disposición de los LED en la FPGA, se reforzó la interpretación de los pesos binarios (2⁰, 2¹, 2², 2³), lo que permitió relacionar correctamente los bits de entrada de A y B con el resultado esperado de la suma.
+- Se logró implementar y verificar el funcionamiento de un decodificador de 4 bits para el control de un display de 7 segmentos en FPGA, confirmando que el circuito traduce correctamente una entrada binaria en el dígito decimal correspondiente.
+
+- La identificación del tipo de display (ánodo común) fue fundamental para el correcto funcionamiento del circuito, ya que en esta configuración los segmentos se encienden con nivel lógico `0`. Esto implicó invertir la lógica de decodificación respecto a un display de cátodo común, asignando `0` a los segmentos que deben activarse y `1` a los que permanecen apagados.
+
+- El proceso de decodificación de 4 bits a 7 bits se realizó mediante una estructura `case` en Verilog, donde cada combinación de entrada (0–9) se asoció a un patrón específico de 7 bits que controla los segmentos a–g del display. Esta metodología permitió simplificar el diseño y garantizar que cada dígito se visualice correctamente.
+
+- La asignación de las salidas del decodificador a los pines físicos del display de 7 segmentos en la FPGA se realizó mediante el archivo de restricciones (pin planner) de QUARTUS, asegurando que cada señal `seg[6:0]` se conectara al segmento correspondiente del display. Esta etapa fue clave para que el diseño funcionara correctamente en hardware.
+
+- El módulo selector permitió alternar entre mostrar el resultado de una operación (suma) y el valor directo de una entrada, demostrando la utilidad de los multiplexores en sistemas digitales para gestionar múltiples fuentes de datos hacia un mismo dispositivo de salida.
+
+- La implementación en FPGA validó experimentalmente el diseño, confirmando que la simulación y el comportamiento en hardware coinciden, y reforzando la importancia de considerar las características físicas del dispositivo (como el tipo de display) al momento de programar la lógica de control.
 
 ---
 
 ## 6. Referencias
 
 * Material de clase de la asignatura Técnicas Digitales, Universidad ECCI.
-* Documentación y material proporcionado para el Laboratorio 02: sumador 4bit.
+* Documentación y material proporcionado para el Laboratorio 03: decodificador 4 bit a 7 bir para display de 7 segmentos.
 * IEEE Standard for Verilog Hardware Description Language.
 * Manual de usuario DE10-Lite Cost-effective Max 10 board
