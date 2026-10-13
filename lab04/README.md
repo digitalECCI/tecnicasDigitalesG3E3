@@ -459,7 +459,7 @@ Finalmente, el diseño fue compilado y programado en la FPGA. La implementación
 
 En esta sección se incorporan las evidencias obtenidas durante la implementación y demostración del funcionamiento de los circuitos en FPGA.
 
-[Ver implementación de DIVISOR DE FRECUENCIA EN UN CRONOMETRO descrito en FPGA con salida en display de 7 segmentos](https://youtube.com/shorts/4XhQkAXjQDo?feature=share)
+[Ver implementación de DIVISOR DE FRECUENCIA EN UN CRONOMETRO descrito en FPGA con salida en display de 7 segmentos](https://youtu.be/m1DGkvdYnMI)
 
 ---
 
