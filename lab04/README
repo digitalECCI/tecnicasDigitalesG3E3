@@ -426,7 +426,6 @@ endmodule
 
 Antes de llevar a cabo la implementación física, el diseño se sometió a un proceso de simulación por GTKWAVE con el fin de verificar el comportamiento lógico del circuito.
 
-
 ---
 - CRONOMETRO
 
@@ -437,11 +436,9 @@ Antes de llevar a cabo la implementación física, el diseño se sometió a un p
 
 ## 3. Implementación en FPGA
 
-### Implementación del cronómetro en FPGA
-
 Después de verificar el funcionamiento de los módulos mediante simulación, se implementó el diseño completo del cronómetro en la FPGA Altera MAX 10 utilizando el software Quartus. El sistema integró el divisor de frecuencia, el selector de velocidad, los contadores decimales conectados en cascada y los módulos decodificadores para display de 7 segmentos.
 
-Para visualizar el conteo se utilizaron cuatro displays de 7 segmentos. Cada display representa uno de los dígitos del cronómetro: milisegundos, centésimas, décimas y segundos. Las salidas de 4 bits generadas por los contadores (`mil`, `cen`, `dec` y `seg`) se conectaron a cuatro instancias del módulo `siete_seg`, encargado de convertir cada valor BCD en las siete señales necesarias para controlar los segmentos del display.
+Para visualizar el conteo se utilizaron cuatro displays de 7 segmentos. Cada display representa uno de los dígitos del cronómetro: milisegundos, centésimas, décimas y segundos. Las salidas de 4 bits generadas por los contadores (`mil`, `cen`, `dec` y `seg`) se conectaron a cuatro instancias del módulo `siete_seg`,encargado de convertir cada valor BCD en las siete señales necesarias para controlar los segmentos del display.
 
 La disposición lógica empleada fue la siguiente:
 
@@ -462,39 +459,40 @@ Finalmente, el diseño fue compilado y programado en la FPGA. La implementación
 
 En esta sección se incorporan las evidencias obtenidas durante la implementación y demostración del funcionamiento de los circuitos en FPGA.
 
-[Ver implementación de decodificador en FPGA con salida en display de 7 segmentos](https://youtube.com/shorts/4XhQkAXjQDo?feature=share)
+[Ver implementación de DIVISOR DE FRECUENCIA EN UN CRONOMETRO descrito en FPGA con salida en display de 7 segmentos](https://youtube.com/shorts/4XhQkAXjQDo?feature=share)
 
 ---
 
 ## 4. Resultados
 
-La simulación del diseño permitió verificar el correcto funcionamiento del decodificador de 4 bits y el módulo selector. Durante la ejecución del testbench, se observó que el display de 7 segmentos mostraba los dígitos esperados según el valor aplicado en las entradas y la posición del interruptor `sel`.
+La simulación permitió comprobar el funcionamiento integrado del cronómetro antes de su implementación física. Mediante el testbench se verificó la generación de los pulsos de habilitación, el comportamiento de los contadores decimales y la propagación del acarreo entre los cuatro dígitos. Se observó que cada contador avanzaba únicamente cuando recibía su respectiva señal de habilitación y que, al alcanzar el valor `9`, retornaba a `0`, permitiendo el incremento del dígito inmediatamente superior.
 
-Cuando `sel = 0`, el display mostró el resultado de la suma de `A` y `B`, confirmando que el módulo `select` estaba enviando correctamente el valor de `res` al decodificador. Por otro lado, cuando `sel = 1`, el display mostró directamente el valor de `A`, evidenciando que el selector estaba cambiando la fuente de datos según lo esperado.
+Asimismo, se validó el funcionamiento del divisor de frecuencia y del módulo selector de velocidad. Dependiendo de la combinación aplicada a los interruptores `sw[1:0]`, el sistema modificó la cantidad de pulsos `tick` necesarios para generar la señal `en`. Esto permitió obtener diferentes velocidades de conteo sin alterar la señal de reloj principal de la FPGA.
 
-La implementación en la FPGA corroboró los resultados obtenidos en simulación. Al manipular los interruptores correspondientes a las entradas `A`, `B` y `sel`, se pudo observar en tiempo real cómo el display actualizaba el dígito mostrado, validando así el comportamiento del circuito tanto en entorno de simulación como en hardware.
+Durante la simulación, las salidas `mil`, `cen`, `dec` y `seg` mostraron una secuencia de conteo decimal coherente. Por ejemplo, al completarse el ciclo de los dígitos inferiores, se observó la transición de `0.999` a `1.000`, confirmando el funcionamiento correcto de la lógica de acarreo en cascada.
 
----
+La implementación en la FPGA Altera MAX 10 confirmó los resultados obtenidos en el entorno de simulación. Los cuatro displays de 7 segmentos visualizaron de forma sincronizada los valores generados por los contadores, representando las unidades de milisegundo, centésimas, décimas y segundos. Al modificar los interruptores de selección, fue posible observar directamente el cambio en la velocidad de avance del cronómetro.
+
+Finalmente, se comprobó que el decodificador BCD a 7 segmentos operó correctamente con los displays de ánodo común de la tarjeta. Los dígitos entre `0` y `9` se visualizaron de acuerdo con las señales generadas por el módulo `siete_seg`, utilizando lógica activa en bajo, donde un `0` lógico enciende el segmento correspondiente. De esta forma, la implementación física validó la correspondencia entre la simulación en Verilog y el comportamiento real del sistema en hardware.
+
+
 
 ## 5. Conclusiones
 
-- Se logró implementar y verificar el funcionamiento de un decodificador de 4 bits para el control de un display de 7 segmentos en FPGA, confirmando que el circuito traduce correctamente una entrada binaria en el dígito decimal correspondiente.
+- Se diseñó e implementó un cronómetro digital en Verilog para una FPGA Altera MAX 10, integrando un divisor de frecuencia, un selector de velocidad, contadores BCD en cascada y decodificadores para displays de 7 segmentos.
 
-- La identificación del tipo de display (ánodo común) fue fundamental para el correcto funcionamiento del circuito, ya que en esta configuración los segmentos se encienden con nivel lógico `0`. Esto implicó invertir la lógica de decodificación respecto a un display de cátodo común, asignando `0` a los segmentos que deben activarse y `1` a los que permanecen apagados.
+- La estructura modular del diseño facilitó la construcción, simulación y verificación de cada bloque funcional, permitiendo integrar el sistema completo de manera organizada y reutilizable.
 
-- El proceso de decodificación de 4 bits a 7 bits se realizó mediante una estructura `case` en Verilog, donde cada combinación de entrada (0–9) se asoció a un patrón específico de 7 bits que controla los segmentos a–g del display. Esta metodología permitió simplificar el diseño y garantizar que cada dígito se visualice correctamente.
+- El divisor de frecuencia y el selector controlaron la velocidad de avance del cronómetro mediante pulsos de habilitación (`en`), evitando modificar directamente el reloj principal de la FPGA y manteniendo un funcionamiento síncrono.
 
-- La asignación de las salidas del decodificador a los pines físicos del display de 7 segmentos en la FPGA se realizó mediante el archivo de restricciones (pin planner) de QUARTUS, asegurando que cada señal `seg[6:0]` se conectara al segmento correspondiente del display. Esta etapa fue clave para que el diseño funcionara correctamente en hardware.
+- La conexión en cascada de cuatro contadores módulo 10 permitió representar milisegundos, centésimas, décimas y segundos. La lógica de acarreo aseguró transiciones correctas entre los dígitos, por ejemplo, de `0.999` a `1.000`.
 
-- El módulo selector permitió alternar entre mostrar el resultado de una operación (suma) y el valor directo de una entrada, demostrando la utilidad de los multiplexores en sistemas digitales para gestionar múltiples fuentes de datos hacia un mismo dispositivo de salida.
-
-- La implementación en FPGA validó experimentalmente el diseño, confirmando que la simulación y el comportamiento en hardware coinciden, y reforzando la importancia de considerar las características físicas del dispositivo (como el tipo de display) al momento de programar la lógica de control.
-
+- La simulación y la implementación física validaron el comportamiento del sistema. Los cuatro displays de 7 segmentos visualizaron correctamente el conteo mediante lógica activa en bajo, propia de los displays de ánodo común de la FPGA.
 ---
 
 ## 6. Referencias
 
 * Material de clase de la asignatura Técnicas Digitales, Universidad ECCI.
-* Documentación y material proporcionado para el Laboratorio 03: decodificador 4 bit a 7 bir para display de 7 segmentos.
+* Documentación y material proporcionado para el Laboratorio 04: divisor de frecuencia.
 * IEEE Standard for Verilog Hardware Description Language.
 * Manual de usuario DE10-Lite Cost-effective Max 10 board
