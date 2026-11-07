@@ -145,23 +145,7 @@ La arquitectura separa la generación de tiempo de la lógica de control. De est
 
 ### - Diagrama de bloques:
 
-   ┌─────────┐              ┌─────────┐              ┌─────────┐
-   │  ROjO   │              │AMARILLO │              │  VERDE  │
-   |         |  N1 ciclos   |A VERDE  |   N2 ciclos  |         | 
-   │  R=1    │─────────────▶│  R=0    │─────────────▶│  R=0   │
-   │  A=0    │              │  A=1    │              │  A=0    │
-   │  V=0    │              │  V=0    │              │  V=1    │
-   └─────────┘              └─────────┘              └─────────┘  
-        ▲                                                 |            
-        |                                                 |  
-        |                   ┌─────────┐                   |  
-        |                   │AMARILLO │                   |          
-        |     N2 ciclos     | A ROJO  |    N3 ciclos      |  
-        |───────────────────│  R=0    │◀──────────────────|  
-                            │  A=1    │
-                            │  V=0    │
-                            └─────────┘ 
-              
+![Diagrama-de-bloques.png](Evidencias/Diagrama de bloques.png)
 
 ### - Definición de los estados
 
@@ -181,7 +165,7 @@ Rojo vehicular → Amarillo hacia verde → Verde vehicular → Amarillo hacia r
 El ciclo completo tiene una duración nominal de 26 segundos, correspondiente a la suma de los cuatro intervalos programados.
 
 ![DIAGRAMA_DE_ESTADOS.jpeg](Evidencias/DIAGRAMA DE ESTADOS.jpeg)
-![Simulación tb_cronometro_1.png](   Evidencias/tb_cronometro_1.png)
+
 
 ### 4- Tabla de salidas
 
@@ -251,30 +235,7 @@ Las señales principales utilizadas para integrar los bloques son:
 
 Las señales internas incluyen el estado actual, el próximo estado, el tick de un segundo, el contador de duración y el registro de solicitud.
 
-### 4.8. Integración con el montaje físico
-
-El diseño se implementó en la FPGA y se conectó a los módulos de semáforo, al botón y al buzzer. Cada salida lógica se relacionó con un pin físico de la tarjeta para controlar el elemento correspondiente.
-
-La asignación de pines forma parte de la integración del sistema y debe documentarse con los valores efectivamente utilizados en el proyecto. De esta manera, se conserva la correspondencia entre los nombres de las señales en Verilog y las conexiones del montaje.
-
-> INSERTAR AQUÍ UNA CAPTURA DE PIN PLANNER.
->
-> La imagen debe mostrar los nombres de las señales y sus ubicaciones físicas asignadas. Si no se distinguen todos los datos, complementar con una tabla de conexiones.
->
-> Figura 5. Asignación de pines de entrada y salida del sistema en Quartus.
-
-> INSERTAR AQUÍ UNA FOTOGRAFÍA GENERAL DEL MONTAJE.
->
-> Deben distinguirse la FPGA, los módulos de semáforo, el botón, el buzzer y el cableado principal.
->
-> Figura 6. Montaje físico del sistema de semaforización vehicular y peatonal con alarma sonora.
-
-Las fotografías de cada estado y las capturas de las formas de onda se presentan en la sección de resultados, donde se comparan las condiciones previstas en el diseño con el comportamiento observado durante las pruebas.
-
-
-
-
-Codificación en código Verilog:
+## Codificación en código Verilog:
 
 ### Divisor de frecuencia (señal de reloj clk)
 
