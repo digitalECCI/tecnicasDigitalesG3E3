@@ -1,4 +1,4 @@
-# Lab04 - Cronometro implementando el divisor de frecuencia.
+# Lab05 - Máquinas de Estado Finito: Semáforo Básico en FPGA.
 
 ## Integrantes
 
@@ -13,7 +13,7 @@
 
 Indice:
 
-1. [Cronometro](#1-Cronometro)
+1. [Semaforo](#1-Semaforo)
 2. [Simulaciones](#2-simulaciones)
 3. [Implementación en FPGA](#3-implementación-en-fpga)
 4. [Resultados](#4-resultados)
@@ -24,86 +24,116 @@ Indice:
 
 Todos los módulos fueron simulados para verificar su correcto comportamiento lógico y, posteriormente, se sintetizaron e implementaron en una FPGA usando Quartus, comprobando su operación en hardware.
 
-## 1. Cronometro
+## 1. Semaforo
 
-### 1.1 Divisor de frecuencia (señal de reloj clk)
+### 1.1 Introducción
 
-El divisor de frecuencia tiene como finalidad generar una señal periódica de habilitación, denominada `tick`, a partir del reloj principal de la FPGA (`clk`). Esta señal permite que los módulos posteriores, como el contador del cronómetro, se actualicen a una velocidad menor y controlada.
+El presente informe describe el diseño, la implementación y las pruebas físicas de un sistema de semaforización vehicular y peatonal mediante una tarjeta FPGA DE10-Lite de la familia MAX 10. El desarrollo se realizó en Verilog, utilizando una máquina de estados finitos tipo Moore para organizar la secuencia de funcionamiento y definir las salidas correspondientes a cada etapa del semáforo.
 
-Para ello, el módulo utiliza un contador interno de 16 bits llamado `count`, el cual incrementa su valor en cada flanco ascendente de la señal `clk`. Cuando el contador alcanza el valor `49999`, equivalente a completar 50.000 ciclos de reloj desde `0` hasta `49999`, se reinicia en cero y la salida `tick` toma el valor lógico `1` durante un único ciclo de reloj.
+El sistema integra un módulo de control, un divisor de frecuencia y contadores que permiten establecer los intervalos de las luces roja, amarilla y verde. A partir del reloj de 50 MHz de la tarjeta, se genera una referencia temporal de un segundo para controlar la duración de los estados. Asimismo, se coordinan las señales del semáforo vehicular y del peatonal, de manera que el paso peatonal se habilite durante la etapa de rojo vehicular.
 
-En los ciclos restantes, mientras el contador continúa su conteo, la señal `tick` permanece en `0`. De esta forma, se obtiene un pulso periódico que puede emplearse como señal de habilitación para controlar la velocidad de conteo del cronómetro.
+Como funcionalidad adicional, se incorporaron un botón de solicitud y un buzzer, con el propósito de proporcionar una indicación sonora durante el verde peatonal cuando exista una solicitud previa del usuario. El diseño se llevó a un montaje físico con la FPGA y dos módulos de semáforo, en el cual se realizaron pruebas del prototipo.
+
+Este laboratorio permitió aplicar conceptos de lógica combinacional y secuencial, máquinas de estados, temporización y descripción de hardware. En el informe se presentan la arquitectura del sistema, los cálculos de temporización, la implementación en Verilog, las evidencias del montaje y el análisis de los resultados obtenidos.
 
 ### 1.2 Módulo selector de velocidad
 
-El módulo `seleccion` permite ajustar la velocidad de avance del cronómetro mediante dos interruptores físicos de la FPGA, representados por la entrada `sw[1:0]`. Su función es recibir los pulsos de referencia `tick`, generados por el divisor de frecuencia, y producir una señal de habilitación llamada `en`.
+## Marco teórico
 
-La salida `en` funciona como un pulso de control para el cronómetro. Cuando `en` toma el valor lógico `1`, el contador de tiempo puede incrementar su valor. De esta manera, el módulo modifica la velocidad efectiva del cronómetro sin alterar el reloj principal `clk` de la FPGA.
+### 1. Sistemas secuenciales y máquinas de estados finitos
 
-El módulo se compone de dos bloques `always`. El primer bloque, `always @(*)`, corresponde a lógica combinacional y determina el valor de `limit` según la posición de los interruptores:
+Un sistema digital secuencial conserva información sobre su funcionamiento anterior mediante registros. A diferencia de la lógica combinacional, cuya salida depende de las entradas actuales, un sistema secuencial utiliza también la información almacenada para determinar su comportamiento.
 
-| `sw[1:0]` | `limit` | Funcionamiento |
-|---|---:|---|
-| `00` | `999` | Genera un pulso `en` cada 1000 pulsos `tick`. |
-| `01` | `99` | Genera un pulso `en` cada 100 pulsos `tick`. |
-| `10` | `9` | Genera un pulso `en` cada 10 pulsos `tick`. |
-| `11` | `0` | Genera un pulso `en` con cada pulso `tick`. |
+Una máquina de estados finitos, o FSM (Finite State Machine), permite representar este comportamiento mediante un conjunto limitado de estados y reglas de transición. Sus elementos principales son:
 
-El segundo bloque, `always @(posedge clk)`, corresponde a lógica secuencial y controla el contador interno `count`. En cada flanco ascendente del reloj, el módulo verifica si se recibió un pulso `tick`. Si el contador alcanza el valor definido en `limit`, se reinicia a cero y la salida `en` toma el valor `1` durante un único ciclo de reloj. En los demás casos, `en` permanece en `0`.
+- Estados: representan las condiciones de funcionamiento del sistema.
+- Entradas: corresponden a las señales que intervienen en las decisiones de control.
+- Lógica de transición: determina el próximo estado.
+- Salidas: son las señales de control generadas por la máquina.
+- Estado inicial: establece la condición de arranque o reinicio.
 
-El módulo también incorpora un reinicio síncrono mediante la señal `rst`. Cuando esta señal se activa, el contador interno y la salida de habilitación se inicializan en cero en el siguiente flanco ascendente de `clk`.
+En el semáforo, los estados representan las distintas etapas de circulación, mientras que el cumplimiento del tiempo asignado a cada etapa determina las transiciones. [165]
 
-### 1.3 Contador
+### 2. Modelos Moore y Mealy
 
-El módulo `contador` implementa un contador decimal síncrono de tipo módulo 10. Su función es recorrer los valores entre 0 y 9 y almacenar el resultado en la salida de 4 bits `q[3:0]`. Este módulo representa la unidad básica de cada dígito decimal que se visualiza en el cronómetro.
+Las máquinas de estados se clasifican principalmente en los modelos Moore y Mealy. En una máquina Moore, las salidas dependen del estado actual. En una máquina Mealy, las salidas dependen tanto del estado actual como de las entradas.
 
-El contador opera de forma sincronizada con el flanco ascendente de la señal `clk`. Cuando la señal de reinicio `rst` está activa, la salida `q` se inicializa en cero. Como el reinicio se evalúa dentro del bloque `always @(posedge clk)`, corresponde a un reset síncrono.
+El control principal del semáforo se desarrolla mediante el modelo **Moore**, ya que cada estado establece una combinación definida de luces vehiculares y peatonales. Así, las entradas y los contadores determinan cuándo debe producirse una transición, mientras que el estado determina cuáles luces se activan.
 
-Si `rst` está desactivado y la señal de habilitación `en` toma el valor lógico `1`, el contador incrementa su valor. Para los valores entre 0 y 8, la salida aumenta en una unidad. Cuando el valor almacenado alcanza `9`, el siguiente pulso de habilitación reinicia el contador en `0`. Este comportamiento corresponde a un contador módulo 10 o contador BCD.
+Esta organización facilita la representación del sistema mediante un diagrama de estados y permite separar las decisiones de transición de las señales que controlan los módulos luminosos. [165]
 
-Cuando `en = 0`, el módulo no modifica la salida y conserva el último valor contado. Esta condición permite controlar el instante en que el contador avanza, utilizando los pulsos de habilitación generados por el módulo selector.
+### 3. Secuencia del semáforo vehicular y peatonal
 
-El cronómetro completo se construye mediante cuatro instancias de este contador: `counter0`, `counter1`, `counter2` y `counter3`. Estos bloques representan, respectivamente, las unidades, decenas, centenas y millares. Su funcionamiento es similar al cuentakilómetros de un automóvil: cuando las unidades pasan de 9 a 0, se incrementan las decenas; cuando las decenas pasan de 9 a 0, se incrementan las centenas, y así sucesivamente hasta el último dígito.
+El sistema coordina el paso vehicular y peatonal mediante una secuencia repetitiva. En el diseño desarrollado se distinguen cuatro estados:
 
-Por ejemplo, la secuencia de conteo puede observarse de la siguiente manera:
+| Estado | Luz vehicular activa | Luz peatonal activa | Duración programada |
+|---|---|---|---|
+| Rojo vehicular | Roja | Verde | 10 s |
+| Amarillo hacia verde | Amarilla | Roja | 3 s |
+| Verde vehicular | Verde | Roja | 10 s |
+| Amarillo hacia rojo | Amarilla | Roja | 3 s |
 
-```text
-0007 → 0008 → 0009 → 0010 → 0011
-```
+Aunque las dos etapas amarillas activan la misma luz, se representan mediante estados diferentes porque conducen a estados distintos. Una precede al verde vehicular y la otra al rojo vehicular.
 
-De este modo, la conexión de los cuatro contadores permite representar valores decimales desde `0000` hasta `9999`.
+La coordinación establece que el verde peatonal se habilite durante el rojo vehicular. Durante las etapas amarillas y el verde vehicular, el semáforo peatonal permanece en rojo. Esta relación evita que el diseño autorice simultáneamente el paso vehicular y peatonal.
 
-### 1.4 Módulo decodificador de 7 segmentos
+La guía presenta cuatro etapas en su diagrama, aunque algunos apartados mencionan tres estados. Para este desarrollo se distinguen las cuatro etapas, conservando los intervalos de 10 s y 3 s indicados. [165]
 
-El módulo `siete_seg` implementa un decodificador BCD a display de 7 segmentos. Su función es convertir el valor binario de 4 bits recibido en la entrada `A[3:0]` en un patrón de siete señales de salida, `seg[6:0]`, encargado de controlar los segmentos del display y representar un dígito decimal.
+### 4. Organización de la FSM en Verilog
 
-La salida del módulo se organiza como `seg[6:0] = {a, b, c, d, e, f, g}`, donde cada bit controla uno de los siete segmentos del display. Debido a que la FPGA utiliza displays de ánodo común, la lógica de activación es activa en bajo: un valor lógico `0` enciende un segmento y un valor `1` lo apaga.
+La descripción de la máquina se organiza en tres bloques:
 
-La conversión se realiza mediante un bloque combinacional `always @(*)` y una estructura `case (A)`. Cada combinación binaria válida de la entrada, desde `0000` hasta `1001`salida espec los números 
+1. Registro de estado: almacena el estado actual y se actualiza en el flanco positivo del reloj.
+2. Lógica de próximo estado: evalúa el estado actual y las condiciones de transición.
+3. Lógica de salida: determina las luces que deben activarse en cada estado.
 
-Por ejemplo,módulo asign enciende losmostrar el n segmento cenuno de los dpatrón adecu correspondie
+En Verilog, el bloque secuencial se describe mediante `always @(posedge clk)`, mientras que los bloques combinacionales se describen mediante `always @(*)`.
 
-Los valores  `1010` y `11 BCD válidos. Por esta razón, se utiliza la condición `default`, que asigna `seg = 7'b1111111` y mantiene todos los segmentos apagados. Esta condición evita que el display muestre caracteres no deseados cuando recibe una combinación no válida.
+Esta separación facilita la lectura, la simulación y la revisión del diseño. En los bloques combinacionales deben asignarse valores a todas las salidas en cada posible condición, mediante valores predeterminados o ramas completas, para evitar la inferencia de almacenamiento no deseado. [165]
 
+### 5. Referencia temporal y divisor de frecuencia
 
-### 1.5 Módulo principal del cronómetro
+El diseño utiliza el reloj de 50 MHz de la tarjeta como referencia temporal. Esta frecuencia equivale a 50.000.000 ciclos por segundo y corresponde a un periodo de 20 ns.
 
-El módulo `cronometro` integra cuatro instancias del módulo `contador` para formar un sistema de conteo decimal de cuatro dígitos. Las salidas `mil`, `cen`, `dec` y `seg` representan, respectivamente, las unidades de milisegundo, centésimas, décimas y segundos. Cada señal tiene un ancho de 4 bits y almacena valores decimales entre 0 y 9.
+Para controlar intervalos de varios segundos, un contador genera una señal de habilitación denominada `tick_1hz`. Esta señal se activa durante un ciclo del reloj principal y se repite una vez por segundo.
 
-La arquitectura se basa en una cascada de habilitación. El contador de menor peso, denominado `mili`, recibe directamente la señal `en`, proveniente del módulo selector. Los demás contadores solo se habilitan cuando reciben el pulso `en` y todos los dígitos de menor peso han alcanzado el valor decimal 9.
+La cantidad de ciclos entre pulsos se obtiene mediante la relación entre la frecuencia del reloj y la frecuencia de repetición deseada. Para un reloj de 50 MHz y una repetición de 1 Hz, se requieren 50.000.000 ciclos. Como el contador comienza en cero, el valor final de comparación es `49_999_999`.
 
-Las señales de habilitación se generan de la siguiente manera:
+El tick no es una onda cuadrada que permanezca medio segundo en alto y medio segundo en bajo. Es un pulso breve que habilita la actualización del contador de segundos, mientras los registros continúan trabajando con el reloj principal. El uso de pulsos de habilitación permite mantener una referencia de reloj común para la lógica secuencial. [183][190]
 
-| Señal | Expresión lógica | Función |
-|---|---|---|
-| `en_mil` | `en` | Habilita directamente el conteo de las unidades de milisegundo. |
-| `en_cen` | `en && (mil == 9)` | Incrementa las centésimas cuando las milésimas pasan de 9 a 0. |
-| `en_dec` | `en && (mil == 9) && (cen == 9)` | Incrementa las décimas cuando milésimas y centésimas completan su ciclo. |
-| `en_seg` | `en && (mil == 9) && (cen == 9) && (dec == 9)` | Incrementa los segundos cuando los tres dígitos inferiores completan su ciclo. |
+### 6. Contadores y duración de los estados
 
-Este mecanismo actúa como un acarreo decimal. Por ejemplo, cuando el cronómetro se encuentra en `0.999` y se recibe un nuevo pulso de habilitación, los dígitos `mil`, `cen` y `dec` vuelven a cero, mientras que el contador `seg` incrementa su valor. Como resultado, el cronómetro cambia de `0.999` a `1.000`.
+Los contadores permiten transformar los pulsos de referencia en intervalos de tiempo. En el semáforo, el contador de duración avanza una vez por cada `tick_1hz`.
 
-Todos los contadores utilizan la misma señal de reloj `clk`, por lo que sus cambios se producen de forma síncrona. Además, la entrada `rst` se conecta a las cuatro instancias, permitiendo reiniciar todos los dígitos a cero de manera simultánea.
+Para una etapa de diez segundos, el conteo comienza en cero y recorre los valores de 0 a 9; al recibir el décimo tick se produce la transición. Para una etapa de tres segundos, recorre los valores de 0 a 2 y cambia de estado con el tercer tick.
+
+El ancho del registro debe permitir representar todos los valores utilizados. Un contador de cuatro bits puede representar valores de 0 a 15, por lo que resulta suficiente para contar las duraciones de tres y diez segundos.
+
+El contador del divisor requiere una capacidad mayor, porque debe representar valores hasta `49_999_999`. El mínimo necesario es 26 bits; utilizar un registro de mayor ancho también permite realizar ese conteo. Los contadores y las señales temporales deben generarse de forma síncrona para conservar una relación definida con el reloj principal. [180][190]
+
+### 7. Botón de solicitud y alarma sonora
+
+El laboratorio contempla una ampliación mediante un botón y una alarma sonora. Su propósito es acompañar el verde peatonal con una señal audible únicamente cuando el usuario haya realizado una solicitud previa. [165]
+
+Para conservar esa solicitud después de liberar el botón, el sistema necesita un registro de memoria. Mientras el paso peatonal está bloqueado, una pulsación válida almacena la solicitud. Al comenzar el verde peatonal, la lógica puede habilitar el buzzer si dicha solicitud está pendiente.
+
+Al finalizar el intervalo autorizado, la solicitud atendida debe borrarse para evitar que la alarma se active indefinidamente en los ciclos posteriores. Por tanto, la orden de activación del buzzer depende tanto de la etapa peatonal como de la solicitud almacenada; esta lógica complementa la FSM Moore que controla las luces.
+
+### 8. Sincronización y antirrebote de entradas
+
+El botón de solicitud es una entrada externa cuyo cambio no está necesariamente alineado con el reloj de la FPGA. Para incorporarlo a la lógica síncrona se emplea una etapa de sincronización, generalmente formada por registros consecutivos, que reduce el riesgo de propagar efectos asociados a la metastabilidad.
+
+Además, los contactos mecánicos pueden generar varias transiciones rápidas durante una sola pulsación. Este fenómeno se conoce como rebote y puede provocar que el circuito interprete varios eventos en lugar de uno.
+
+La sincronización y el antirrebote cumplen funciones diferentes. La primera adapta la entrada al dominio de reloj; el segundo exige que la señal permanezca estable durante un intervalo antes de aceptar el cambio. Posteriormente, un detector de flanco permite generar un pulso por cada pulsación válida. Estas medidas son criterios de acondicionamiento de entrada y deben distinguirse de los bloques efectivamente incluidos en la versión final del código. [188][191]
+
+### 9. Simulación e implementación física
+
+La simulación permite comprobar la secuencia de estados, los tiempos de permanencia y la relación entre las salidas antes de evaluar el montaje físico. Para ello se utiliza un testbench, que genera el reloj, aplica el reinicio y establece las condiciones de prueba.
+
+Las formas de onda permiten observar el estado actual, los contadores, las luces vehiculares y peatonales y, cuando se incluye la ampliación, la solicitud y la orden de activación del buzzer. La guía propone utilizar Icarus Verilog y capturar las formas de onda como evidencia del comportamiento temporal.
+
+La implementación física complementa esta verificación mediante la programación de la FPGA y la conexión de los módulos externos. En esta etapa se contrastan las señales descritas en Verilog con el comportamiento observable de los semáforos, manteniendo una distinción entre los tiempos programados y los tiempos que hayan sido medidos experimentalmente. [165]
 
 ---
 PINOUT DISPLAY 7 SEGMENTOS FPGA ALTERA 10 MAX
