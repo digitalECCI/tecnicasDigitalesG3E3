@@ -36,11 +36,9 @@ Como funcionalidad adicional, se incorporaron un botón de solicitud y un buzzer
 
 Este laboratorio permitió aplicar conceptos de lógica combinacional y secuencial, máquinas de estados, temporización y descripción de hardware. En el informe se presentan la arquitectura del sistema, los cálculos de temporización, la implementación en Verilog, las evidencias del montaje y el análisis de los resultados obtenidos.
 
-### 1.2 Módulo selector de velocidad
+### 1.2 Marco teórico
 
-## Marco teórico
-
-### 1. Sistemas secuenciales y máquinas de estados finitos
+### - Sistemas secuenciales y máquinas de estados finitos
 
 Un sistema digital secuencial conserva información sobre su funcionamiento anterior mediante registros. A diferencia de la lógica combinacional, cuya salida depende de las entradas actuales, un sistema secuencial utiliza también la información almacenada para determinar su comportamiento.
 
@@ -52,17 +50,17 @@ Una máquina de estados finitos, o FSM (Finite State Machine), permite represent
 - Salidas: son las señales de control generadas por la máquina.
 - Estado inicial: establece la condición de arranque o reinicio.
 
-En el semáforo, los estados representan las distintas etapas de circulación, mientras que el cumplimiento del tiempo asignado a cada etapa determina las transiciones. [165]
+En el semáforo, los estados representan las distintas etapas de circulación, mientras que el cumplimiento del tiempo asignado a cada etapa determina las transiciones.
 
-### 2. Modelos Moore y Mealy
+### - Modelos Moore y Mealy
 
 Las máquinas de estados se clasifican principalmente en los modelos Moore y Mealy. En una máquina Moore, las salidas dependen del estado actual. En una máquina Mealy, las salidas dependen tanto del estado actual como de las entradas.
 
 El control principal del semáforo se desarrolla mediante el modelo **Moore**, ya que cada estado establece una combinación definida de luces vehiculares y peatonales. Así, las entradas y los contadores determinan cuándo debe producirse una transición, mientras que el estado determina cuáles luces se activan.
 
-Esta organización facilita la representación del sistema mediante un diagrama de estados y permite separar las decisiones de transición de las señales que controlan los módulos luminosos. [165]
+Esta organización facilita la representación del sistema mediante un diagrama de estados y permite separar las decisiones de transición de las señales que controlan los módulos luminosos.
 
-### 3. Secuencia del semáforo vehicular y peatonal
+### - Secuencia del semáforo vehicular y peatonal
 
 El sistema coordina el paso vehicular y peatonal mediante una secuencia repetitiva. En el diseño desarrollado se distinguen cuatro estados:
 
@@ -77,9 +75,9 @@ Aunque las dos etapas amarillas activan la misma luz, se representan mediante es
 
 La coordinación establece que el verde peatonal se habilite durante el rojo vehicular. Durante las etapas amarillas y el verde vehicular, el semáforo peatonal permanece en rojo. Esta relación evita que el diseño autorice simultáneamente el paso vehicular y peatonal.
 
-La guía presenta cuatro etapas en su diagrama, aunque algunos apartados mencionan tres estados. Para este desarrollo se distinguen las cuatro etapas, conservando los intervalos de 10 s y 3 s indicados. [165]
+La guía presenta cuatro etapas en su diagrama, aunque algunos apartados mencionan tres estados. Para este desarrollo se distinguen las cuatro etapas, conservando los intervalos de 10 s y 3 s indicados.
 
-### 4. Organización de la FSM en Verilog
+### - Organización de la FSM en Verilog
 
 La descripción de la máquina se organiza en tres bloques:
 
@@ -89,9 +87,9 @@ La descripción de la máquina se organiza en tres bloques:
 
 En Verilog, el bloque secuencial se describe mediante `always @(posedge clk)`, mientras que los bloques combinacionales se describen mediante `always @(*)`.
 
-Esta separación facilita la lectura, la simulación y la revisión del diseño. En los bloques combinacionales deben asignarse valores a todas las salidas en cada posible condición, mediante valores predeterminados o ramas completas, para evitar la inferencia de almacenamiento no deseado. [165]
+Esta separación facilita la lectura, la simulación y la revisión del diseño. En los bloques combinacionales deben asignarse valores a todas las salidas en cada posible condición, mediante valores predeterminados o ramas completas, para evitar la inferencia de almacenamiento no deseado.
 
-### 5. Referencia temporal y divisor de frecuencia
+### - Referencia temporal y divisor de frecuencia
 
 El diseño utiliza el reloj de 50 MHz de la tarjeta como referencia temporal. Esta frecuencia equivale a 50.000.000 ciclos por segundo y corresponde a un periodo de 20 ns.
 
@@ -99,9 +97,9 @@ Para controlar intervalos de varios segundos, un contador genera una señal de h
 
 La cantidad de ciclos entre pulsos se obtiene mediante la relación entre la frecuencia del reloj y la frecuencia de repetición deseada. Para un reloj de 50 MHz y una repetición de 1 Hz, se requieren 50.000.000 ciclos. Como el contador comienza en cero, el valor final de comparación es `49_999_999`.
 
-El tick no es una onda cuadrada que permanezca medio segundo en alto y medio segundo en bajo. Es un pulso breve que habilita la actualización del contador de segundos, mientras los registros continúan trabajando con el reloj principal. El uso de pulsos de habilitación permite mantener una referencia de reloj común para la lógica secuencial. [183][190]
+El tick no es una onda cuadrada que permanezca medio segundo en alto y medio segundo en bajo. Es un pulso breve que habilita la actualización del contador de segundos, mientras los registros continúan trabajando con el reloj principal. El uso de pulsos de habilitación permite mantener una referencia de reloj común para la lógica secuencial.
 
-### 6. Contadores y duración de los estados
+### - Contadores y duración de los estados
 
 Los contadores permiten transformar los pulsos de referencia en intervalos de tiempo. En el semáforo, el contador de duración avanza una vez por cada `tick_1hz`.
 
@@ -109,44 +107,192 @@ Para una etapa de diez segundos, el conteo comienza en cero y recorre los valore
 
 El ancho del registro debe permitir representar todos los valores utilizados. Un contador de cuatro bits puede representar valores de 0 a 15, por lo que resulta suficiente para contar las duraciones de tres y diez segundos.
 
-El contador del divisor requiere una capacidad mayor, porque debe representar valores hasta `49_999_999`. El mínimo necesario es 26 bits; utilizar un registro de mayor ancho también permite realizar ese conteo. Los contadores y las señales temporales deben generarse de forma síncrona para conservar una relación definida con el reloj principal. [180][190]
+El contador del divisor requiere una capacidad mayor, porque debe representar valores hasta `49_999_999`. El mínimo necesario es 26 bits; utilizar un registro de mayor ancho también permite realizar ese conteo. Los contadores y las señales temporales deben generarse de forma síncrona para conservar una relación definida con el reloj principal.
 
-### 7. Botón de solicitud y alarma sonora
+### - Botón de solicitud y alarma sonora
 
-El laboratorio contempla una ampliación mediante un botón y una alarma sonora. Su propósito es acompañar el verde peatonal con una señal audible únicamente cuando el usuario haya realizado una solicitud previa. [165]
+El laboratorio contempla una ampliación mediante un botón y una alarma sonora. Su propósito es acompañar el verde peatonal con una señal audible únicamente cuando el usuario haya realizado una solicitud previa.
 
 Para conservar esa solicitud después de liberar el botón, el sistema necesita un registro de memoria. Mientras el paso peatonal está bloqueado, una pulsación válida almacena la solicitud. Al comenzar el verde peatonal, la lógica puede habilitar el buzzer si dicha solicitud está pendiente.
 
 Al finalizar el intervalo autorizado, la solicitud atendida debe borrarse para evitar que la alarma se active indefinidamente en los ciclos posteriores. Por tanto, la orden de activación del buzzer depende tanto de la etapa peatonal como de la solicitud almacenada; esta lógica complementa la FSM Moore que controla las luces.
 
-### 8. Sincronización y antirrebote de entradas
-
-El botón de solicitud es una entrada externa cuyo cambio no está necesariamente alineado con el reloj de la FPGA. Para incorporarlo a la lógica síncrona se emplea una etapa de sincronización, generalmente formada por registros consecutivos, que reduce el riesgo de propagar efectos asociados a la metastabilidad.
-
-Además, los contactos mecánicos pueden generar varias transiciones rápidas durante una sola pulsación. Este fenómeno se conoce como rebote y puede provocar que el circuito interprete varios eventos en lugar de uno.
-
-La sincronización y el antirrebote cumplen funciones diferentes. La primera adapta la entrada al dominio de reloj; el segundo exige que la señal permanezca estable durante un intervalo antes de aceptar el cambio. Posteriormente, un detector de flanco permite generar un pulso por cada pulsación válida. Estas medidas son criterios de acondicionamiento de entrada y deben distinguirse de los bloques efectivamente incluidos en la versión final del código. [188][191]
-
-### 9. Simulación e implementación física
+### Evidencias de simulación
 
 La simulación permite comprobar la secuencia de estados, los tiempos de permanencia y la relación entre las salidas antes de evaluar el montaje físico. Para ello se utiliza un testbench, que genera el reloj, aplica el reinicio y establece las condiciones de prueba.
 
 Las formas de onda permiten observar el estado actual, los contadores, las luces vehiculares y peatonales y, cuando se incluye la ampliación, la solicitud y la orden de activación del buzzer. La guía propone utilizar Icarus Verilog y capturar las formas de onda como evidencia del comportamiento temporal.
 
-La implementación física complementa esta verificación mediante la programación de la FPGA y la conexión de los módulos externos. En esta etapa se contrastan las señales descritas en Verilog con el comportamiento observable de los semáforos, manteniendo una distinción entre los tiempos programados y los tiempos que hayan sido medidos experimentalmente. [165]
+La implementación física complementa esta verificación mediante la programación de la FPGA y la conexión de los módulos externos. En esta etapa se contrastan las señales descritas en Verilog con el comportamiento observable de los semáforos, manteniendo una distinción entre los tiempos programados y los tiempos que hayan sido medidos experimentalmente.
 
 ---
-PINOUT DISPLAY 7 SEGMENTOS FPGA ALTERA 10 MAX
-![pinout_7_seg_FPGA.png](Evidencias/pinout_7_seg_FPGA.png)
+## 1.3 Diseño del sistema
 
-![pinout_7_seg_FPGA.png](Evidencias/LETRAS_DISPLAY_7_SEG.png)
+### - Arquitectura del sistema
+
+El diseño se divide en los siguientes bloques funcionales:
+
+| Bloque | Función |
+|---|---|
+| Generador de referencia temporal | Cuenta ciclos del reloj de 50 MHz y produce un pulso de habilitación cada segundo. |
+| Contador de duración | Cuenta los pulsos de un segundo para determinar cuándo termina cada etapa. |
+| Máquina de estados | Define la secuencia de funcionamiento y el próximo estado. |
+| Lógica de salidas | Establece las luces vehiculares y peatonales correspondientes al estado actual. |
+| Registro de solicitud | Conserva la solicitud realizada mediante el botón. |
+| Control del buzzer | Habilita la alarma durante el verde peatonal cuando existe una solicitud pendiente. |
+
+La arquitectura separa la generación de tiempo de la lógica de control. De esta forma, el contador determina cuándo debe ocurrir una transición y la máquina de estados establece qué salidas deben activarse.
+
+### - Diagrama de bloques:
+
+   ┌─────────┐              ┌─────────┐              ┌─────────┐
+   │  ROjO   │              │AMARILLO │              │  VERDE  │
+   |         |  N1 ciclos   |A VERDE  |   N2 ciclos  |         | 
+   │  R=1    │─────────────▶│  R=0    │─────────────▶│  R=0   │
+   │  A=0    │              │  A=1    │              │  A=0    │
+   │  V=0    │              │  V=0    │              │  V=1    │
+   └─────────┘              └─────────┘              └─────────┘  
+        ▲                                                 |            
+        |                                                 |  
+        |                   ┌─────────┐                   |  
+        |                   │AMARILLO │                   |          
+        |     N2 ciclos     | A ROJO  |    N3 ciclos      |  
+        |───────────────────│  R=0    │◀──────────────────|  
+                            │  A=1    │
+                            │  V=0    │
+                            └─────────┘ 
+              
+
+### - Definición de los estados
+
+La máquina se organizó en cuatro estados. Aunque existen tres colores vehiculares, se utilizaron dos estados diferentes para la luz amarilla, debido a que cada uno conduce a una etapa distinta.
+
+| Estado | Codificación | Descripción | Duración |
+|---|:---:|---|:---:|
+| Rojo vehicular | `00` | Detiene los vehículos y habilita el paso peatonal. | 10 s |
+| Amarillo hacia verde | `01` | Mantiene bloqueado el paso peatonal y precede al verde vehicular. | 3 s |
+| Verde vehicular | `10` | Habilita el paso vehicular y mantiene el rojo peatonal. | 10 s |
+| Amarillo hacia rojo | `11` | Mantiene bloqueado el paso peatonal y precede al rojo vehicular. | 3 s |
+
+La secuencia programada es:
+
+Rojo vehicular → Amarillo hacia verde → Verde vehicular → Amarillo hacia rojo → Rojo vehicular.
+
+El ciclo completo tiene una duración nominal de 26 segundos, correspondiente a la suma de los cuatro intervalos programados.
+
+> INSERTAR AQUÍ EL DIAGRAMA DE ESTADOS.
+>
+> Representar cuatro burbujas con los nombres y códigos anteriores. Dentro de cada burbuja deben indicarse las luces activas. Las flechas deben identificar las condiciones de transición: 10 s, 3 s, 10 s y 3 s.
+>
+> Agregar una flecha de reinicio hacia el estado de rojo vehicular.
+>
+> Figura 2. Diagrama de estados de la máquina Moore para el control de los semáforos.
+
+### 4.4. Tabla de salidas
+
+Las salidas de los semáforos se determinan a partir del estado actual. En la siguiente tabla, `1` representa una orden lógica de encendido y `0` una orden de apagado.
+
+| Estado | Rojo vehicular | Amarillo vehicular | Verde vehicular | Rojo peatonal | Verde peatonal |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Rojo vehicular | 1 | 0 | 0 | 0 | 1 |
+| Amarillo hacia verde | 0 | 1 | 0 | 1 | 0 |
+| Verde vehicular | 0 | 0 | 1 | 1 | 0 |
+| Amarillo hacia rojo | 0 | 1 | 0 | 1 | 0 |
+
+La tabla permite comprobar que el verde vehicular y el verde peatonal nunca se ordenan simultáneamente. Asimismo, durante las dos etapas amarillas, el semáforo peatonal permanece en rojo.
+
+Los valores de esta tabla describen la lógica de control; su correspondencia eléctrica debe coincidir con la polaridad de los módulos utilizados en el montaje.
+
+### 4.5. Temporización y condiciones de transición
+
+El reloj principal de 50 MHz proporciona la referencia temporal del sistema. El generador de tiempo cuenta 50.000.000 ciclos y produce un pulso de habilitación denominado `tick_1hz`, cuya repetición corresponde a un segundo.
+
+El contador de duración avanza únicamente cuando recibe este pulso. Al completarse el intervalo del estado actual, la FSM cambia al siguiente estado y el contador comienza el conteo de la nueva etapa.
+
+| Estado actual | Condición de finalización | Estado siguiente |
+|---|---|---|
+| Rojo vehicular | Completar 10 ticks | Amarillo hacia verde |
+| Amarillo hacia verde | Completar 3 ticks | Verde vehicular |
+| Verde vehicular | Completar 10 ticks | Amarillo hacia rojo |
+| Amarillo hacia rojo | Completar 3 ticks | Rojo vehicular |
+
+Al iniciar el conteo desde cero, las etapas de diez segundos utilizan los valores de 0 a 9 y realizan la transición con el décimo tick. Las etapas de tres segundos utilizan los valores de 0 a 2 y realizan la transición con el tercer tick.
+
+El reinicio establece una condición conocida para la máquina de estados, el contador de duración y el registro de solicitud de la alarma.
+
+> INSERTAR AQUÍ, SI SE DISPONE DE ELLA, UNA CAPTURA DEL VISOR RTL DE QUARTUS.
+>
+> La captura debe permitir identificar los bloques principales del diseño sintetizado. Si el esquema completo resulta ilegible, utilizar una vista general y un acercamiento de la FSM.
+>
+> Figura 3. Representación RTL del sistema obtenida en Quartus.
+>
+> Si no se cuenta con esta captura, omitir la figura y ajustar la numeración de las siguientes.
+
+### 4.6. Diseño de la solicitud de alarma sonora
+
+La alarma se diseñó como una funcionalidad adicional al control de las luces. El botón no cambia directamente el estado del semáforo ni adelanta el paso peatonal; su función es registrar una solicitud de acompañamiento sonoro.
+
+El comportamiento previsto es el siguiente:
+
+1. El usuario presiona el botón mientras el paso peatonal está bloqueado.
+2. El sistema conserva la solicitud en un registro.
+3. Al comenzar el verde peatonal, se habilita el buzzer si existe una solicitud pendiente.
+4. La alarma permanece habilitada durante ese intervalo.
+5. Al finalizar el verde peatonal, se desactiva la alarma y se elimina la solicitud atendida.
+
+La condición lógica de habilitación puede expresarse como:
+
+`alarma_habilitada = verde_peatonal AND solicitud_almacenada`
+
+Esta expresión representa la orden de activación de la alarma, no necesariamente la señal eléctrica de excitación del buzzer. La generación de esa señal depende del dispositivo utilizado.
+
+> INSERTAR AQUÍ UN DIAGRAMA FUNCIONAL DEL CONTROL DE ALARMA.
+>
+> Mostrar el botón, el registro de solicitud, la señal de verde peatonal y la salida de habilitación del buzzer. Incluir la condición de borrado al finalizar el intervalo peatonal.
+>
+> Figura 4. Lógica de almacenamiento de solicitud y habilitación de la alarma sonora.
+
+### 4.7. Entradas y salidas del diseño
+
+Las señales principales utilizadas para integrar los bloques son:
+
+| Señal | Tipo | Función |
+|---|---|---|
+| `clk` | Entrada | Reloj principal de 50 MHz. |
+| `rst` | Entrada | Reinicia el sistema a su condición inicial. |
+| `boton_alarma` | Entrada | Permite solicitar la indicación sonora. |
+| `veh_rojo` | Salida | Control de la luz roja vehicular. |
+| `veh_amarillo` | Salida | Control de la luz amarilla vehicular. |
+| `veh_verde` | Salida | Control de la luz verde vehicular. |
+| `peat_rojo` | Salida | Control de la luz roja peatonal. |
+| `peat_verde` | Salida | Control de la luz verde peatonal. |
+| `buzzer` | Salida | Control de la alarma sonora. |
+
+Las señales internas incluyen el estado actual, el próximo estado, el tick de un segundo, el contador de duración y el registro de solicitud.
+
+### 4.8. Integración con el montaje físico
+
+El diseño se implementó en la FPGA y se conectó a los módulos de semáforo, al botón y al buzzer. Cada salida lógica se relacionó con un pin físico de la tarjeta para controlar el elemento correspondiente.
+
+La asignación de pines forma parte de la integración del sistema y debe documentarse con los valores efectivamente utilizados en el proyecto. De esta manera, se conserva la correspondencia entre los nombres de las señales en Verilog y las conexiones del montaje.
+
+> INSERTAR AQUÍ UNA CAPTURA DE PIN PLANNER.
+>
+> La imagen debe mostrar los nombres de las señales y sus ubicaciones físicas asignadas. Si no se distinguen todos los datos, complementar con una tabla de conexiones.
+>
+> Figura 5. Asignación de pines de entrada y salida del sistema en Quartus.
+
+> INSERTAR AQUÍ UNA FOTOGRAFÍA GENERAL DEL MONTAJE.
+>
+> Deben distinguirse la FPGA, los módulos de semáforo, el botón, el buzzer y el cableado principal.
+>
+> Figura 6. Montaje físico del sistema de semaforización vehicular y peatonal con alarma sonora.
+
+Las fotografías de cada estado y las capturas de las formas de onda se presentan en la sección de resultados, donde se comparan las condiciones previstas en el diseño con el comportamiento observado durante las pruebas.
 
 
-### Evidencias de simulación
 
-Las tablas de verdad fueron verificadas mediante simulación ejecutando GTKWAVE (Verilog) de los respectivos módulos.
 
----
 Codificación en código Verilog:
 
 ### Divisor de frecuencia (señal de reloj clk)
