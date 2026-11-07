@@ -16,7 +16,7 @@ Indice:
 1. [Semaforo](#1-Semaforo)
 2. [Simulaciones](#2-simulaciones)
 3. [Implementación en FPGA](#3-implementación-en-fpga)
-4. [Resultados](#4-resultados)
+4. [Preguntas de análisis](#4-Preguntas-de-análisis)
 5. [Conclusiones](#5-conclusiones)
 6. [Referencias](#6-referencias)
 
@@ -180,15 +180,10 @@ Rojo vehicular → Amarillo hacia verde → Verde vehicular → Amarillo hacia r
 
 El ciclo completo tiene una duración nominal de 26 segundos, correspondiente a la suma de los cuatro intervalos programados.
 
-> INSERTAR AQUÍ EL DIAGRAMA DE ESTADOS.
->
-> Representar cuatro burbujas con los nombres y códigos anteriores. Dentro de cada burbuja deben indicarse las luces activas. Las flechas deben identificar las condiciones de transición: 10 s, 3 s, 10 s y 3 s.
->
-> Agregar una flecha de reinicio hacia el estado de rojo vehicular.
->
-> Figura 2. Diagrama de estados de la máquina Moore para el control de los semáforos.
+![DIAGRAMA_DE_ESTADOS.jpeg](Evidencias/DIAGRAMA DE ESTADOS.jpeg)
+![Simulación tb_cronometro_1.png](   Evidencias/tb_cronometro_1.png)
 
-### 4.4. Tabla de salidas
+### 4- Tabla de salidas
 
 Las salidas de los semáforos se determinan a partir del estado actual. En la siguiente tabla, `1` representa una orden lógica de encendido y `0` una orden de apagado.
 
@@ -220,15 +215,7 @@ Al iniciar el conteo desde cero, las etapas de diez segundos utilizan los valore
 
 El reinicio establece una condición conocida para la máquina de estados, el contador de duración y el registro de solicitud de la alarma.
 
-> INSERTAR AQUÍ, SI SE DISPONE DE ELLA, UNA CAPTURA DEL VISOR RTL DE QUARTUS.
->
-> La captura debe permitir identificar los bloques principales del diseño sintetizado. Si el esquema completo resulta ilegible, utilizar una vista general y un acercamiento de la FSM.
->
-> Figura 3. Representación RTL del sistema obtenida en Quartus.
->
-> Si no se cuenta con esta captura, omitir la figura y ajustar la numeración de las siguientes.
-
-### 4.6. Diseño de la solicitud de alarma sonora
+### -  Diseño de la solicitud de alarma sonora
 
 La alarma se diseñó como una funcionalidad adicional al control de las luces. El botón no cambia directamente el estado del semáforo ni adelanta el paso peatonal; su función es registrar una solicitud de acompañamiento sonoro.
 
@@ -246,13 +233,7 @@ La condición lógica de habilitación puede expresarse como:
 
 Esta expresión representa la orden de activación de la alarma, no necesariamente la señal eléctrica de excitación del buzzer. La generación de esa señal depende del dispositivo utilizado.
 
-> INSERTAR AQUÍ UN DIAGRAMA FUNCIONAL DEL CONTROL DE ALARMA.
->
-> Mostrar el botón, el registro de solicitud, la señal de verde peatonal y la salida de habilitación del buzzer. Incluir la condición de borrado al finalizar el intervalo peatonal.
->
-> Figura 4. Lógica de almacenamiento de solicitud y habilitación de la alarma sonora.
-
-### 4.7. Entradas y salidas del diseño
+### - Entradas y salidas del diseño
 
 Las señales principales utilizadas para integrar los bloques son:
 
