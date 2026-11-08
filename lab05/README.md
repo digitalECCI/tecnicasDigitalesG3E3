@@ -117,14 +117,6 @@ Para conservar esa solicitud después de liberar el botón, el sistema necesita 
 
 Al finalizar el intervalo autorizado, la solicitud atendida debe borrarse para evitar que la alarma se active indefinidamente en los ciclos posteriores. Por tanto, la orden de activación del buzzer depende tanto de la etapa peatonal como de la solicitud almacenada; esta lógica complementa la FSM Moore que controla las luces.
 
-### Evidencias de simulación
-
-La simulación permite comprobar la secuencia de estados, los tiempos de permanencia y la relación entre las salidas antes de evaluar el montaje físico. Para ello se utiliza un testbench, que genera el reloj, aplica el reinicio y establece las condiciones de prueba.
-
-Las formas de onda permiten observar el estado actual, los contadores, las luces vehiculares y peatonales y, cuando se incluye la ampliación, la solicitud y la orden de activación del buzzer. La guía propone utilizar Icarus Verilog y capturar las formas de onda como evidencia del comportamiento temporal.
-
-La implementación física complementa esta verificación mediante la programación de la FPGA y la conexión de los módulos externos. En esta etapa se contrastan las señales descritas en Verilog con el comportamiento observable de los semáforos, manteniendo una distinción entre los tiempos programados y los tiempos que hayan sido medidos experimentalmente.
-
 ---
 ## 1.3 Diseño del sistema
 
@@ -577,36 +569,21 @@ endmodule
 
 Antes de llevar a cabo la implementación física, el diseño se sometió a un proceso de simulación por GTKWAVE con el fin de verificar el comportamiento lógico del circuito.
 
+La simulación permite comprobar la secuencia de estados, los tiempos de permanencia y la relación entre las salidas antes de evaluar el montaje físico. Para ello se utiliza un testbench, que genera el reloj, aplica el reinicio y establece las condiciones de prueba.
+
+Las formas de onda permiten observar el estado actual, los contadores, las luces vehiculares y peatonales y, cuando se incluye la ampliación, la solicitud y la orden de activación del buzzer. La guía propone utilizar Icarus Verilog y capturar las formas de onda como evidencia del comportamiento temporal.
+
+La implementación física complementa esta verificación mediante la programación de la FPGA y la conexión de los módulos externos. En esta etapa se contrastan las señales descritas en Verilog con el comportamiento observable de los semáforos, manteniendo una distinción entre los tiempos programados y los tiempos que hayan sido medidos experimentalmente.
+
+
 ---
-- CRONOMETRO
+- Semaforo.v
 
-![Simulación tb_cronometro_1.png](   Evidencias/tb_cronometro_1.png)
+![gtkwave_semaforo.png](Evidencias/gtkwave_semaforo.png)
 
-![Simulación tb_cronometro_2.png](   Evidencias/tb_cronometro_2.png)
 
 
 ## 3. Implementación en FPGA
-
-Después de verificar el funcionamiento de los módulos mediante simulación, se implementó el diseño completo del cronómetro en la FPGA Altera MAX 10 utilizando el software Quartus. El sistema integró el divisor de frecuencia, el selector de velocidad, los contadores decimales conectados en cascada y los módulos decodificadores para display de 7 segmentos.
-
-Para visualizar el conteo se utilizaron cuatro displays de 7 segmentos. Cada display representa uno de los dígitos del cronómetro: milisegundos, centésimas, décimas y segundos. Las salidas de 4 bits generadas por los contadores (`mil`, `cen`, `dec` y `seg`) se conectaron a cuatro instancias del módulo `siete_seg`,encargado de convertir cada valor BCD en las siete señales necesarias para controlar los segmentos del display.
-
-La disposición lógica empleada fue la siguiente:
-
-```text
-HEX3   HEX2   HEX1   HEX0
- seg    dec    cen    mil
-```
-
-De esta forma, el dígito de menor peso (`mil`) se visualiza en `HEX0`, mientras que el contador de segundos (`seg`) se visualiza en `HEX3`. Por ejemplo, para el valor `1.234`, los displays presentan los valores `1`, `2`, `3` y `4`.
-
-La asignación de las señales a los pines físicos de la tarjeta se realizó mediante la herramienta Pin Planner de Quartus. Se configuraron las entradas correspondientes al reloj, al reinicio y a los interruptores de control, así como las salidas de cada uno de los cuatro displays: `HEX0[6:0]`, `HEX1[6:0]`, `HEX2[6:0]` y `HEX3[6:0]`.
-
-Debido a que la tarjeta utiliza displays de ánodo común, la lógica de control es activa en bajo. Por esta razón, el decodificador asigna un valor lógico `0` a los segmentos que deben encenderse y un valor `1` a los segmentos que deben permanecer apagados.
-
-Finalmente, el diseño fue compilado y programado en la FPGA. La implementación física permitió comprobar el avance del cronómetro y verificar que los cuatro displays actualizaran los valores de manera sincronizada de acuerdo con la velocidad seleccionada mediante los switche
-
-### Evidencias de implementación
 
 En esta sección se incorporan las evidencias obtenidas durante la implementación y demostración del funcionamiento de los circuitos en FPGA.
 
@@ -614,19 +591,68 @@ En esta sección se incorporan las evidencias obtenidas durante la implementaci�
 
 ---
 
-## 4. Resultados
+## 4. Preguntas de análisis
 
-La simulación permitió comprobar el funcionamiento integrado del cronómetro antes de su implementación física. Mediante el testbench se verificó la generación de los pulsos de habilitación, el comportamiento de los contadores decimales y la propagación del acarreo entre los cuatro dígitos. Se observó que cada contador avanzaba únicamente cuando recibía su respectiva señal de habilitación y que, al alcanzar el valor `9`, retornaba a `0`, permitiendo el incremento del dígito inmediatamente superior.
+### 4.1. ¿Por qué se usa el modelo Moore en lugar de Mealy para este semáforo? ¿Cuál sería la diferencia en el diagrama de estados?
 
-Asimismo, se validó el funcionamiento del divisor de frecuencia y del módulo selector de velocidad. Dependiendo de la combinación aplicada a los interruptores `sw[1:0]`, el sistema modificó la cantidad de pulsos `tick` necesarios para generar la señal `en`. Esto permitió obtener diferentes velocidades de conteo sin alterar la señal de reloj principal de la FPGA.
+Se utiliza el modelo **Moore** porque las luces del semáforo dependen del estado actual. Cada estado establece una combinación definida de salidas vehiculares y peatonales, mientras que el contador determina cuándo debe producirse la siguiente transición. Esta separación facilita el diseño y la verificación de la secuencia.
 
-Durante la simulación, las salidas `mil`, `cen`, `dec` y `seg` mostraron una secuencia de conteo decimal coherente. Por ejemplo, al completarse el ciclo de los dígitos inferiores, se observó la transición de `0.999` a `1.000`, confirmando el funcionamiento correcto de la lógica de acarreo en cascada.
+En el diagrama Moore, las salidas se escriben dentro de las burbujas de los estados y las condiciones de transición se indican sobre las flechas. En un modelo Mealy, las salidas dependerían también de las entradas y se representarían sobre las transiciones mediante la relación `condición / salida`.
 
-La implementación en la FPGA Altera MAX 10 confirmó los resultados obtenidos en el entorno de simulación. Los cuatro displays de 7 segmentos visualizaron de forma sincronizada los valores generados por los contadores, representando las unidades de milisegundo, centésimas, décimas y segundos. Al modificar los interruptores de selección, fue posible observar directamente el cambio en la velocidad de avance del cronómetro.
+Para este sistema no es necesario que las luces respondan directamente a una entrada externa: deben conservar la combinación asignada hasta completar el tiempo del estado correspondiente.
 
-Finalmente, se comprobó que el decodificador BCD a 7 segmentos operó correctamente con los displays de ánodo común de la tarjeta. Los dígitos entre `0` y `9` se visualizaron de acuerdo con las señales generadas por el módulo `siete_seg`, utilizando lógica activa en bajo, donde un `0` lógico enciende el segmento correspondiente. De esta forma, la implementación física validó la correspondencia entre la simulación en Verilog y el comportamiento real del sistema en hardware.
+### 4.2. ¿Cuántos flip-flops requiere mínimamente la codificación de estado con 3 estados? ¿Y con one-hot encoding? Compare los recursos de síntesis.
 
+En codificación binaria, el número mínimo de flip-flops para representar una máquina con N estados es:
 
+\[
+n = log_2(N) rceil
+\]
+
+Para tres estados:
+
+\[
+n = log_2(3) \rceil = 2
+\]
+
+Por tanto, se requieren dos flip-flops, con códigos como `00`, `01` y `10`. En codificación one-hot se utiliza un flip-flop por estado, por lo que se requieren tres, con códigos como `001`, `010` y `100`. [195]
+
+| Estados considerados | Codificación binaria | Codificación one-hot |
+|---|:---:|:---:|
+| 3 estados solicitados en la pregunta | 2 flip-flops | 3 flip-flops |
+| 4 estados del diseño implementado | 2 flip-flops | 4 flip-flops |
+
+La codificación binaria reduce la cantidad de registros de estado. La codificación one-hot utiliza más registros, pero puede simplificar la lógica de transición y decodificación. El consumo total y la velocidad dependen de la síntesis y de la arquitectura de la FPGA. [195]
+
+Estos valores corresponden únicamente al registro de estado, no a los contadores ni al registro de solicitud del buzzer. Además, Quartus puede recodificar la FSM durante la síntesis; por ello, la comparación experimental debe basarse en los reportes obtenidos para cada configuración y no solamente en la declaración del código.
+
+### 4.3. Si se quisiera agregar un estado de intermitente amarillo, con parpadeo a 1 Hz, ¿cómo modificaría el diagrama de estados y el código?
+
+Se agregaría un estado denominado `S_INTERMITENTE`, en el cual las luces roja y verde vehiculares permanecerían apagadas, la luz amarilla parpadearía y el semáforo peatonal permanecería en rojo.
+
+Para definir cuándo se utiliza este modo, se podría incorporar una entrada `modo_intermitente`. Al activarla, la FSM entraría en el nuevo estado; al desactivarla, regresaría al estado inicial de rojo vehicular.
+
+En el diagrama se añadiría una burbuja para `S_INTERMITENTE` y las transiciones de entrada y salida correspondientes. Como el diseño actual tiene cuatro estados, agregar un quinto requeriría ampliar la codificación binaria de dos a tres bits.
+
+Para obtener un parpadeo de 1 Hz, la luz debe permanecer 0,5 s encendida y 0,5 s apagada. Con un reloj de 50 MHz, cada semiperiodo requiere:
+
+\[
+N = 50.000.000 \times 0,5 = 25.000.000\ ciclos
+\]
+
+Por tanto, un contador compararía con `24_999_999` y alternaría un registro de parpadeo. En `S_INTERMITENTE`, la salida amarilla tomaría el valor de ese registro.
+
+Invertir la salida solamente una vez por segundo produciría un periodo de dos segundos, equivalente a 0,5 Hz, y no el parpadeo de 1 Hz solicitado.
+
+### 4.4. ¿Qué problema ocurriría si el bloque de lógica de transición y el registro de estado estuvieran en un solo bloque always @(posedge clk) con señales combinacionales?
+
+Un bloque `always @(posedge clk)` se ejecuta únicamente en el flanco positivo del reloj. Por ello, trasladar directamente la lógica de próximo estado a ese bloque puede convertir una señal que se esperaba combinacional en una señal registrada.
+
+Por ejemplo, si se escriben las asignaciones `siguiente_estado <= ...` y `estado <= siguiente_estado` dentro del mismo bloque, el registro `estado` recibe el valor anterior de `siguiente_estado`. Esto puede introducir un ciclo adicional de retraso respecto al diseño previsto, debido al funcionamiento de las asignaciones no bloqueantes. [207]
+
+No obstante, implementar una FSM en un solo bloque secuencial no es incorrecto por sí mismo: es un estilo válido cuando se diseña de forma coherente. El problema consiste en mezclar estilos o trasladar código sin considerar qué señales quedan registradas y cuándo se actualizan. [197]
+
+En este laboratorio se utiliza la estructura de tres bloques para distinguir claramente el registro de estado, la lógica de transición y las salidas. Esta organización facilita la lectura y la verificación del comportamiento temporal.
 
 ## 5. Conclusiones
 
