@@ -234,7 +234,50 @@ Las señales principales utilizadas para integrar los bloques son:
 | `buzzer` | Salida | Control de la alarma sonora. |
 
 Las señales internas incluyen el estado actual, el próximo estado, el tick de un segundo, el contador de duración y el registro de solicitud.
+## Cálculos
 
+### - Periodo del reloj
+
+La FPGA utiliza un reloj de 50 MHz, equivalente a 50.000.000 ciclos por segundo. Su periodo es:
+
+\[
+T_{\text{clk}} = \frac{1}{50.000.000} = 20\ \text{ns}
+\]
+
+### - Generación del tick de un segundo
+
+Para generar un pulso de habilitación cada segundo, el divisor debe contar:
+
+\[
+N = 50.000.000 \times 1 = 50.000.000\ \text{ciclos}
+\]
+
+Como el conteo comienza en cero, el valor de comparación es `49_999_999`. Al alcanzarlo, el contador se reinicia y activa `tick_1hz` durante un ciclo de reloj, es decir, 20 ns. Este pulso se repite cada segundo y habilita el contador de duración de los estados.
+
+El contador del divisor requiere como mínimo 26 bits, porque:
+
+\[
+2^{25} < 50.000.000 \leq 2^{26}
+\]
+
+### -  Duración de las etapas
+
+El contador de segundos utiliza los pulsos de `tick_1hz` para establecer los siguientes intervalos:
+
+| Etapa vehicular | Tiempo programado | Ticks necesarios |
+|---|:---:|:---:|
+| Rojo | 10 s | 10 |
+| Amarillo hacia verde | 3 s | 3 |
+| Verde | 10 s | 10 |
+| Amarillo hacia rojo | 3 s | 3 |
+
+Las etapas de 10 segundos cuentan de `0` a `9`, y las de 3 segundos de `0` a `2`; la transición ocurre con el décimo o tercer tick, respectivamente.
+
+La duración nominal del ciclo completo es:
+
+\[
+T_{\text{ciclo}} = 10 + 3 + 10 + 3 = 26\ \text{s}
+\]
 ## Codificación en código Verilog:
 
 ### Divisor de frecuencia (señal de reloj clk)
