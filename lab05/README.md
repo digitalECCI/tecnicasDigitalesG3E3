@@ -11,8 +11,6 @@
 
 ## Informe
 
-Indice:
-
 1. [Semaforo](#1-Semaforo)
 2. [Simulaciones](#2-simulaciones)
 3. [Implementación en FPGA](#3-implementación-en-fpga)
@@ -587,7 +585,7 @@ La implementación física complementa esta verificación mediante la programaci
 
 En esta sección se incorporan las evidencias obtenidas durante la implementación y demostración del funcionamiento de los circuitos en FPGA.
 
-[Ver implementación de DIVISOR DE FRECUENCIA EN UN CRONOMETRO descrito en FPGA con salida en display de 7 segmentos](https://youtu.be/m1DGkvdYnMI)
+[Ver implementación de MAQUINA DE ESTADO SEMAFORO descrito en FPGA con salida en display de 7 segmentos](https://youtu.be/Z54Fu60tEWA)
 
 ---
 
