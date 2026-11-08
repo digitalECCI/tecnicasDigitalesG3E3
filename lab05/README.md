@@ -167,7 +167,7 @@ El ciclo completo tiene una duración nominal de 26 segundos, correspondiente a 
 ![DIAGRAMA_DE_ESTADOS.jpeg](Evidencias/DIAGRAMA-DE-ESTADOS.jpeg)
 
 
-### 4- Tabla de salidas
+### - Tabla de salidas
 
 Las salidas de los semáforos se determinan a partir del estado actual. En la siguiente tabla, `1` representa una orden lógica de encendido y `0` una orden de apagado.
 
@@ -182,7 +182,7 @@ La tabla permite comprobar que el verde vehicular y el verde peatonal nunca se o
 
 Los valores de esta tabla describen la lógica de control; su correspondencia eléctrica debe coincidir con la polaridad de los módulos utilizados en el montaje.
 
-### 4.5. Temporización y condiciones de transición
+### - Temporización y condiciones de transición
 
 El reloj principal de 50 MHz proporciona la referencia temporal del sistema. El generador de tiempo cuenta 50.000.000 ciclos y produce un pulso de habilitación denominado `tick_1hz`, cuya repetición corresponde a un segundo.
 
