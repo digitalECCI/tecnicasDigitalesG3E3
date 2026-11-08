@@ -241,7 +241,7 @@ Las señales internas incluyen el estado actual, el próximo estado, el tick de 
 La FPGA utiliza un reloj de 50 MHz, equivalente a 50.000.000 ciclos por segundo. Su periodo es:
 
 \[
-T_{\text{clk}} = \frac{1}{50.000.000} = 20\ \text{ns}
+clk = 50.000.000 = 20 ns
 \]
 
 ### - Generación del tick de un segundo
@@ -249,7 +249,7 @@ T_{\text{clk}} = \frac{1}{50.000.000} = 20\ \text{ns}
 Para generar un pulso de habilitación cada segundo, el divisor debe contar:
 
 \[
-N = 50.000.000 \times 1 = 50.000.000\ \text{ciclos}
+N = 50.000.000 \times 1 = 50.000.000\ \ciclos
 \]
 
 Como el conteo comienza en cero, el valor de comparación es `49_999_999`. Al alcanzarlo, el contador se reinicia y activa `tick_1hz` durante un ciclo de reloj, es decir, 20 ns. Este pulso se repite cada segundo y habilita el contador de duración de los estados.
@@ -276,311 +276,301 @@ Las etapas de 10 segundos cuentan de `0` a `9`, y las de 3 segundos de `0` a `2`
 La duración nominal del ciclo completo es:
 
 \[
-T_{\text{ciclo}} = 10 + 3 + 10 + 3 = 26\ \text{s}
+ciclo= 10 + 3 + 10 + 3 = 26 segundos
 \]
-## Codificación en código Verilog:
+
+
+# Implementación en Verilog
 
 ### Divisor de frecuencia (señal de reloj clk)
 
 ```verilog
-module divisor (
-    input clk,
-    input rst,
-    output reg tick
+module clk_divisor#(
+    parameter integer CLK_HZ = 50_000_000
+)(
+    input  wire clk,
+    input  wire rst,
+    output reg  tick_1hz
 );
 
-    reg [15:0] count;
+    reg [31:0] count;
 
     always @(posedge clk) begin
-
         if (rst) begin
-            count <= 0;
-            tick <= 0;
+            count    <= 32'd0;
+            tick_1hz <= 1'b0;
         end
-
-        else if (count == 49999) begin
-            count <= 0;
-            tick <= 1;
-        end
-
         else begin
-            count <= count + 1;
-            tick <= 0;
-        end
+            // Por defecto, el pulso permanece apagado.
+            tick_1hz <= 1'b0;
 
+            if (count == CLK_HZ - 1) begin
+                count    <= 32'd0;
+                tick_1hz <= 1'b1;
+            end
+            else begin
+                count <= count + 1'b1;
+            end
+        end
     end
 
 endmodule
 ```
 
-### Módulo selector de velocidad
-```verilog
-`include "cronometro.v"
-//`include "divisor.v"
+### Módulo Semaforos
 
-module seleccion (
-    input clk,
-    input rst,
-    input tick,
-    input [1:0] sw,
-    output reg en
+```verilog
+// 00 = Rojo vehicular.
+// 01 = Amarillo a verde.
+// 10 = Verde vehicular.
+// 11 = Amarillo a rojo.
+
+`include "clk_divisor.v"
+`timescale 1ps/1ps
+
+module semaforo #(
+    parameter integer CLK_HZ = 50_000_000
+)(
+    input wire clk,
+    input wire rst,
+
+    // Luces del semáforo.
+    output reg veh_rojo,
+    output reg veh_amarillo,
+    output reg veh_verde,
+
+    // Luces del peatonal.
+    output reg peat_rojo,
+    output reg peat_verde
 );
 
-    reg [9:0] count;
-    reg [9:0] limit;
+    wire tick_1hz;
 
-    always @(*) begin
+    reg [1:0] estado;
+    reg [1:0] siguiente_estado;
 
-        case (sw)
+    reg [3:0] segundos;
 
-            2'b00: limit = 10'd999;
-            2'b01: limit = 10'd99;
-            2'b10: limit = 10'd9;
-            2'b11: limit = 10'd0;
+    clk_divisor#(
+        .CLK_HZ(CLK_HZ)
+    ) divisor (
+        .clk(clk),
+        .rst(rst),
+        .tick_1hz(tick_1hz)
+    );
 
-            default: limit = 10'd999;
 
-        endcase
 
-    end
-
+    // ----------------------------------------------------
     always @(posedge clk) begin
-
         if (rst) begin
-            count <= 0;
-            en <= 0;
+            estado   <= 2'b00;
+            segundos <= 4'd0;
         end
-
         else begin
+            estado <= siguiente_estado;
 
-            en <= 0;
-
-            if (tick) begin
-
-                if (count == limit) begin
-                    count <= 0;
-                    en <= 1;
-                end
-
-                else begin
-                    count <= count + 1;
-                end
-
+            if (estado != siguiente_estado) begin
+                segundos <= 4'd0;
             end
-
+            else if (tick_1hz) begin
+                segundos <= segundos + 1'b1;
+            end
         end
-
     end
 
-endmodule
-```
-### Módulo decodificador de 7 segmentos(anodo comun)
-
-```verilog
-
-module siete_seg (
-    input [3:0] A,
-    output reg [6:0] seg
-);
+    // ----------------------------------------------------
 
     always @(*) begin
+        // Si no termina el tiempo, conserva el estado.
+        siguiente_estado = estado;
 
-        case (A)
+        case (estado)
 
-            4'b0000: seg = 7'b1000000;
-            4'b0001: seg = 7'b1111001;
-            4'b0010: seg = 7'b0100100;
-            4'b0011: seg = 7'b0110000;
-            4'b0100: seg = 7'b0011001;
-            4'b0101: seg = 7'b0010010;
-            4'b0110: seg = 7'b0000010;
-            4'b0111: seg = 7'b1111000;
-            4'b1000: seg = 7'b0000000;
-            4'b1001: seg = 7'b0010000; // se deja haboilitado hasta el numero decimal 9 
-            // 4'b1010: seg = 7'b0001000;
-            // 4'b1011: seg = 7'b0000011;
-            // 4'b1100: seg = 7'b1000110;
-            // 4'b1101: seg = 7'b0100001;
-            // 4'b1110: seg = 7'b0000110;
-            // 4'b1111: seg = 7'b0001110;
-
-            default: seg = 7'b1111111;
-
-        endcase
-
-    end
-
-endmodule
-
-```
-### Módulo principal del cronómetro
-
-
-``` verilog
-`include "contador.v"
-`include "divisor.v"
-`include "7_seg.v"
-
-module cronometro (
-    input clk,
-    input rst,
-    input tick,
-    input en,
-
-    output [3:0] mil,
-    output [3:0] cen,
-    output [3:0] dec,
-    output [3:0] seg
-);
-
-    wire en_mil;
-    wire en_cen;
-    wire en_dec;
-    wire en_seg;
-
-    assign en_mil = en;
-
-    assign en_cen = en &&
-                    (mil == 9);
-
-    assign en_dec = en &&
-                    (mil == 9) &&
-                    (cen == 9);
-
-    assign en_seg = en &&
-                    (mil == 9) &&
-                    (cen == 9) &&
-                    (dec == 9);
-
-    contador mili (
-        .clk(clk),
-        .rst(rst),
-        .en(en_mil),
-        .q(mil)
-    );
-
-    contador cent (
-        .clk(clk),
-        .rst(rst),
-        .en(en_cen),
-        .q(cen)
-    );
-
-    contador dece (
-        .clk(clk),
-        .rst(rst),
-        .en(en_dec),
-        .q(dec)
-    );
-
-    contador segu (
-        .clk(clk),
-        .rst(rst),
-        .en(en_seg),
-        .q(seg)
-    );
-
-endmodule
-
-```
-
-### Modulo Selector (se carga en quartus, encargado de seleccionar)
-
-El módulo `select` se encarga de decidir qué valor se muestra en el display de 7 segmentos: el resultado de la suma o el valor de la entrada `A`, según la posición del interruptor `sel`.
-
-- Si `sel = 0`, se muestra el resultado de la suma (`res`).
-- Si `sel = 1`, se muestra directamente el valor de `A`.
-
-El bloque `always @(*)` hace esta selección de forma automática: cada vez que cambia `sel`, `A` o el resultado de la suma, actualiza la salida `So` sin necesidad de un reloj. Finalmente, el módulo envía el valor seleccionado al decodificador de 7 segmentos para que se visualice en el display.
-
-```verilog
-`include "sumadorthree.v"
-`include "seg.v"
-
-module select (
-    input wire [3:0] A,
-    input wire [3:0] B,
-    input wire Ci,
-    input wire sel,
-    output wire[6:0] seg,
-    output reg [3:0] So
-);
-
-    wire [3:0] res;
-    sum3b sum (
-        .A(A[2:0]),
-        .B(B),
-        .Ci(Ci),
-        .So(res),
-        .Co()
-    );
-    always @(*) begin
-        case (sel)
-            1'b0: begin
-                So = res;
+            // Rojo: 10 segundos.
+            2'b00: begin
+                if (tick_1hz && segundos == 4'd9) // d (decimmal) 9 = 10 segundos. (de 0 a 9)
+                    siguiente_estado = 2'b01;
             end
-            1'b1: begin
-                So = A;
+
+            // Amarillo hacia verde: 3 segundos.
+            2'b01: begin
+                if (tick_1hz && segundos == 4'd2) // d (decimmal) 2 = 3 segundos. (de 0 a 2)
+                    siguiente_estado = 2'b10;
             end
+
+            // Verde: 10 segundos.
+            2'b10: begin
+                if (tick_1hz && segundos == 4'd9)
+                    siguiente_estado = 2'b11;
+            end
+
+            // Amarillo hacia rojo: 3 segundos.
+            2'b11: begin
+                if (tick_1hz && segundos == 4'd2) // d (decimmal) 2 = 3 segundos. (de 0 a 2)
+                    siguiente_estado = 2'b00;
+            end
+
+            default: begin
+                siguiente_estado = 2'b00; // Rojo vehicular.
+            end
+
         endcase
     end
 
-    seg segs (
-        .A(So),
-        .seg(seg)
-    );   
-endmodule
-```
+    // ----------------------------------------------------
+    // SE COMBINA LA LOGICA DE SALIDA CON LA DEL ESTADO.
+    // Modelo Moore: depende solamente del estado.
 
-Codificación en código Verilog tb_selector:
+    always @(*) begin
+
+        // Valores predeterminados.
+        veh_rojo     = 1'b1;
+        veh_amarillo = 1'b0;
+        veh_verde    = 1'b0;
+
+        peat_rojo    = 1'b1;
+        peat_verde   = 1'b0;
+
+        case (estado)
+
+            // Rojo / verde peatonal.
+            2'b00: begin
+                veh_rojo     = 1'b1;
+                veh_amarillo = 1'b0;
+                veh_verde    = 1'b0;
+
+                peat_rojo    = 1'b0;
+                peat_verde   = 1'b1;
+            end
+
+            // Amarillo A verde.
+            2'b01: begin
+                veh_rojo     = 1'b0;
+                veh_amarillo = 1'b1;
+                veh_verde    = 1'b0;
+
+                peat_rojo    = 1'b1;
+                peat_verde   = 1'b0;
+            end
+
+            // Verde  / rojo peatonal.
+            2'b10: begin
+                veh_rojo     = 1'b0;
+                veh_amarillo = 1'b0;
+                veh_verde    = 1'b1;
+
+                peat_rojo    = 1'b1;
+                peat_verde   = 1'b0;
+            end
+
+            // Amarillo A rojo.
+            2'b11: begin
+                veh_rojo     = 1'b0;
+                veh_amarillo = 1'b1;
+                veh_verde    = 1'b0;
+
+                peat_rojo    = 1'b1;
+                peat_verde   = 1'b0;
+            end
+
+            default: begin
+                veh_rojo     = 1'b1;
+                veh_amarillo = 1'b0;
+                veh_verde    = 1'b0;
+
+                peat_rojo    = 1'b0;
+                peat_verde   = 1'b1;
+            end
+
+        endcase
+    end
+
+endmodule
+
+```
+### Módulo tb_semaforo
 
 ```verilog
+
+`include "semaforo.v"
 `timescale 1ns / 1ps
-`include "sel.v"
 
-module tb_sel;
-    reg [3:0] A;
-    reg [2:0] B;
-    reg Ci;
-    reg sel;
+module tb_semaforo;
+    
+    reg clk;
+    reg rst;
 
-    wire [6:0] seg;
-    wire [3:0] So;
+    wire veh_rojo;
+    wire veh_amarillo;
+    wire veh_verde;
 
-    integer i, j;
+    wire peat_rojo;
+    wire peat_verde;
 
-    select uut (
-        .A(A),
-        .B(B),
-        .Ci(Ci),
-        .sel(sel),
-        .seg(seg),
-        .So(So)
+    wire [1:0] estado;
+    wire [3:0] segundos;
+    wire tick_1hz;
+
+    semaforo #(
+        .CLK_HZ(10)     // un tick cada 10 ciclos de reloj.
+    ) uut (
+        .clk(clk),
+        .rst(rst),
+
+        .veh_rojo(veh_rojo),
+        .veh_amarillo(veh_amarillo),
+        .veh_verde(veh_verde),
+
+        .peat_rojo(peat_rojo),
+        .peat_verde(peat_verde)
     );
 
-initial begin
-    $dumpfile("tb_sel.vcd");
-    $dumpvars(0,tb_sel);
+    
+    assign estado   = uut.estado;
+    assign segundos = uut.segundos;
+    assign tick_1hz = uut.tick_1hz;
 
-    for(i=0; i<16; i=i+1) begin
-        for(j=0; j<8; j=j+1) begin
-            A=i;
-            B=j;
-            Ci=0;
-            sel=0;
-            #10;
-        end
+    
+    // periodo = 20 ns.
+    initial begin
+        clk = 1'b0;
+        forever #10 clk = ~clk;
     end
-    for(i=0; i<16; i=i+1) begin
-            A=i;
-            Ci=0;
-            sel=1;
-            #10;
+
+    
+    initial begin
+
+        $dumpfile("tb_semaforo.vcd");
+        $dumpvars(0, tb_semaforo);
+        rst = 1'b1;
+
+        // Mantener reset durante tres flancos de subida.
+        repeat (3) @(posedge clk);
+
+        // Liberar reset en un flanco de bajada.
+        @(negedge clk);
+        rst = 1'b0;
+
+        // Dos ciclos completos:
+        // 26 ticks por ciclo x 10 relojes por tick x 2.
+        repeat (520) @(negedge clk);
+
+        // Prueba adicional: reinicio durante funcionamiento.
+        rst = 1'b1;
+        repeat (3) @(negedge clk);
+        rst = 1'b0;
+
+        // Observar el arranque después del reset.
+        repeat (30) @(negedge clk);
+
+        $display("Simulacion finalizada.");
+        $finish;
     end
-end
+
 endmodule
-```
 
+```
 ---
 
 ## 2. Simulaciones
