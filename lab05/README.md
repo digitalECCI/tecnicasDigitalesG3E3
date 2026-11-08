@@ -656,20 +656,20 @@ En este laboratorio se utiliza la estructura de tres bloques para distinguir cla
 
 ## 5. Conclusiones
 
-- Se diseñó e implementó un cronómetro digital en Verilog para una FPGA Altera MAX 10, integrando un divisor de frecuencia, un selector de velocidad, contadores BCD en cascada y decodificadores para displays de 7 segmentos.
+- Se implementó en la FPGA una **máquina de estados finitos** tipo Moore de cuatro estados, encargada de controlar conjuntamente el semáforo vehicular y el peatonal.
 
-- La estructura modular del diseño facilitó la construcción, simulación y verificación de cada bloque funcional, permitiendo integrar el sistema completo de manera organizada y reutilizable.
+- La lógica de estados coordinó ambos semáforos, habilitando el verde peatonal durante el rojo vehicular y manteniendo el rojo peatonal en las demás etapas.
 
-- El divisor de frecuencia y el selector controlaron la velocidad de avance del cronómetro mediante pulsos de habilitación (`en`), evitando modificar directamente el reloj principal de la FPGA y manteniendo un funcionamiento síncrono.
+- El divisor de frecuencia permitió obtener una referencia de un segundo a partir del reloj de 50 MHz y programar intervalos de 10 segundos para rojo y verde, y de 3 segundos para cada etapa amarilla.
 
-- La conexión en cascada de cuatro contadores módulo 10 permitió representar milisegundos, centésimas, décimas y segundos. La lógica de acarreo aseguró transiciones correctas entre los dígitos, por ejemplo, de `0.999` a `1.000`.
+- Las pruebas físicas con la FPGA y los módulos de semáforo permitieron observar las salidas del diseño y relacionar los estados descritos en Verilog con las luces del montaje.
 
-- La simulación y la implementación física validaron el comportamiento del sistema. Los cuatro displays de 7 segmentos visualizaron correctamente el conteo mediante lógica activa en bajo, propia de los displays de ánodo común de la FPGA.
+- La incorporación del botón y el buzzer amplió el sistema con una solicitud de señalización sonora para el paso peatonal, sin modificar la secuencia principal de los dos semáforos.
 ---
 
 ## 6. Referencias
 
 * Material de clase de la asignatura Técnicas Digitales, Universidad ECCI.
-* Documentación y material proporcionado para el Laboratorio 04: divisor de frecuencia.
+* Documentación y material proporcionado para el Laboratorio 05: Máquinas de Estado Finito: Semáforo Básico en FPGA.
 * IEEE Standard for Verilog Hardware Description Language.
 * Manual de usuario DE10-Lite Cost-effective Max 10 board
