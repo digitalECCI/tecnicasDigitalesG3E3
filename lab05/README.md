@@ -145,7 +145,7 @@ La arquitectura separa la generación de tiempo de la lógica de control. De est
 
 ### - Diagrama de bloques:
 
-![Diagrama-de-bloques.png](Evidencias/Diagrama de bloques.png)
+![Diagrama-de-bloques.png](Evidencias/Diagrama-de-bloques.png)
 
 ### - Definición de los estados
 
@@ -164,7 +164,7 @@ Rojo vehicular → Amarillo hacia verde → Verde vehicular → Amarillo hacia r
 
 El ciclo completo tiene una duración nominal de 26 segundos, correspondiente a la suma de los cuatro intervalos programados.
 
-![DIAGRAMA_DE_ESTADOS.jpeg](Evidencias/DIAGRAMA DE ESTADOS.jpeg)
+![DIAGRAMA_DE_ESTADOS.jpeg](Evidencias/DIAGRAMA-DE-ESTADOS.jpeg)
 
 
 ### 4- Tabla de salidas
