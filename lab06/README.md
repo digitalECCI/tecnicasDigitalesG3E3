@@ -1,4 +1,4 @@
-# Lab05 - Máquinas de Estado Finito: Semáforo Básico en FPGA.
+# Lab06 - Máquinas de Estado Finito: CAJA FUERTE en FPGA.
 
 ## Integrantes
 
