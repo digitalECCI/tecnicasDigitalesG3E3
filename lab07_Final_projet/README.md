@@ -454,3 +454,5 @@ La entrega incluye:
 - Guía del Laboratorio 7 — Proyecto final: enlace de comunicación serial UART entre FPGA y PC. Técnicas Digitales, ECCI.
 
   https://github.com/digital-ECCI/tecnicas-digitales-ECCI-2026-II/tree/main/labs/07_lab07
+
+- Manual de usuario DE10-Lite Cost-effective Max 10 board
