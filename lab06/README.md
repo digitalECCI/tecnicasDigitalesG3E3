@@ -701,3 +701,535 @@ endmodule
 
 
 ```verilog
+
+
+`include "top.v"
+//`include "divisor.v"
+//`include "servo.V"
+//`include "caja_fuerte_fsm.v"
+`timescale 1ns / 1ps
+`timescale 1ns / 1ps
+
+module tb_top_lab06;
+
+    // -------------------------------------------------
+    // Entradas del sistema
+    // -------------------------------------------------
+    reg clk;
+    reg key0;
+    reg key1;
+    reg [3:0] sw;
+
+    // -------------------------------------------------
+    // Salidas del sistema
+    // -------------------------------------------------
+    wire servo;
+    wire led_verde;
+    wire led_rojo;
+
+    wire [6:0] hex5;
+    wire [6:0] hex4;
+    wire [6:0] hex3;
+    wire [6:0] hex2;
+    wire [6:0] hex1;
+    wire [6:0] hex0;
+
+    integer errores;
+
+    localparam [2:0]
+        S_INICIO  = 3'd0,
+        S_ABIERTO = 3'd4,
+        S_ERROR   = 3'd5,
+        S_BLOQUEO = 3'd6;
+
+    // -------------------------------------------------
+    // Reloj de 50 MHz: periodo de 20 ns.
+    // -------------------------------------------------
+    initial begin
+        clk = 1'b0;
+        forever #10 clk = ~clk;
+    end
+
+    // -------------------------------------------------
+    // Dispositivo bajo prueba
+    // -------------------------------------------------
+    top_lab06 u_dut (
+        .clk(clk),
+        .key0(key0),
+        .key1(key1),
+        .sw(sw),
+
+        .servo(servo),
+        .led_verde(led_verde),
+        .led_rojo(led_rojo),
+
+        .hex5(hex5),
+        .hex4(hex4),
+        .hex3(hex3),
+        .hex2(hex2),
+        .hex1(hex1),
+        .hex0(hex0)
+    );
+
+    // -------------------------------------------------
+    // VCD: guardar solo senales relevantes.
+    // Se excluyen clk y los contadores rapidos para
+    // reducir el tamano del archivo.
+    // -------------------------------------------------
+    initial begin
+        $dumpfile("tb_top_lab06.vcd");
+
+        $dumpvars(
+            0,
+            key0,
+            key1,
+            sw,
+            servo,
+            led_verde,
+            led_rojo,
+            hex5,
+            hex4,
+            hex3,
+            hex2,
+            hex1,
+            hex0,
+
+            u_dut.rst,
+            u_dut.key0_pulso,
+            u_dut.servo_posicion,
+
+            u_dut.u_fsm.estado,
+            u_dut.u_fsm.siguiente_estado,
+            u_dut.u_fsm.digito1,
+            u_dut.u_fsm.digito2,
+            u_dut.u_fsm.digito3,
+            u_dut.u_fsm.clave_correcta,
+            u_dut.u_fsm.intentos_restantes,
+
+            u_dut.u_debounce_key0.boton_estable,
+            u_dut.u_servo.posicion_periodo
+        );
+    end
+
+    // -------------------------------------------------
+    // Comprobacion automatica
+    // -------------------------------------------------
+    task comprobar;
+        input condicion;
+        input [8*120-1:0] mensaje;
+        begin
+            if (condicion !== 1'b1) begin
+                errores = errores + 1;
+                $display(
+                    "ERROR [%0t]: %0s",
+                    $time,
+                    mensaje
+                );
+            end
+            else begin
+                $display(
+                    "OK    [%0t]: %0s",
+                    $time,
+                    mensaje
+                );
+            end
+        end
+    endtask
+
+    // -------------------------------------------------
+    // Reinicio maestro con KEY1.
+    // Despues espera 25 ms con KEY0 liberado.
+    // -------------------------------------------------
+    task reiniciar;
+        begin
+            @(negedge clk);
+            key0 = 1'b1;
+            key1 = 1'b0;
+            sw   = 4'h0;
+
+            #1000;
+
+            @(negedge clk);
+            key1 = 1'b1;
+
+            #25_000_000;
+        end
+    endtask
+
+    // -------------------------------------------------
+    // Pulsacion de KEY0:
+    // 25 ms presionado y 25 ms liberado.
+    // -------------------------------------------------
+    task pulsar_key0;
+        begin
+            @(negedge clk);
+            key0 = 1'b0;
+
+            #25_000_000;
+
+            @(negedge clk);
+            key0 = 1'b1;
+
+            #25_000_000;
+        end
+    endtask
+
+    // -------------------------------------------------
+    // Seleccionar y confirmar un digito.
+    // -------------------------------------------------
+    task ingresar_digito;
+        input [3:0] valor;
+        begin
+            @(negedge clk);
+            sw = valor;
+
+            // Estabilizar switches antes de pulsar.
+            #1000;
+
+            pulsar_key0;
+        end
+    endtask
+
+    // -------------------------------------------------
+    // Ingresar una clave incorrecta: 4 - 5 - 6.
+    // -------------------------------------------------
+    task ingresar_clave_incorrecta;
+        begin
+            ingresar_digito(4'h4);
+            ingresar_digito(4'h5);
+            ingresar_digito(4'h6);
+        end
+    endtask
+
+    // -------------------------------------------------
+    // Medir pulso alto y periodo del PWM.
+    // Se llama con posicion estable.
+    // Tiempos expresados en ns.
+    // -------------------------------------------------
+    task verificar_pwm;
+        input integer alto_esperado_ns;
+
+        time inicio;
+        time fin_alto;
+        time siguiente_inicio;
+
+        begin
+            @(posedge servo);
+            inicio = $time;
+
+            @(negedge servo);
+            fin_alto = $time;
+
+            @(posedge servo);
+            siguiente_inicio = $time;
+
+            $display(
+                "PWM: alto = %0d ns; periodo = %0d ns",
+                fin_alto - inicio,
+                siguiente_inicio - inicio
+            );
+
+            comprobar(
+                (fin_alto - inicio) == alto_esperado_ns,
+                "Ancho del pulso PWM correcto"
+            );
+
+            comprobar(
+                (siguiente_inicio - inicio) == 20_000_000,
+                "Periodo PWM de 20 ms"
+            );
+        end
+    endtask
+
+    // -------------------------------------------------
+    // Secuencia de pruebas
+    // -------------------------------------------------
+    initial begin
+        errores = 0;
+        key0    = 1'b1;
+        key1    = 1'b0;
+        sw      = 4'h0;
+
+        $timeformat(-9, 0, " ns", 12);
+
+        // =============================================
+        // PRUEBA 1: estado inicial y PWM cerrado
+        // =============================================
+        $display("\n--- PRUEBA 1: INICIO ---");
+
+        reiniciar;
+
+        comprobar(
+            u_dut.u_fsm.estado == S_INICIO,
+            "Estado inicial"
+        );
+
+        comprobar(
+            u_dut.u_fsm.intentos_restantes == 2'd3,
+            "Tres intentos disponibles"
+        );
+
+        comprobar(
+            (led_rojo == 1'b1) &&
+            (led_verde == 1'b0) &&
+            (u_dut.servo_posicion == 1'b0),
+            "Caja cerrada: LED rojo activo"
+        );
+
+        comprobar(
+            {hex5, hex4, hex3, hex2, hex1, hex0} ==
+            {6{7'b0111111}},
+            "Displays iniciales: seis guiones"
+        );
+
+        verificar_pwm(1_000_000);
+
+        // =============================================
+        // PRUEBA 2: clave correcta 1 - 2 - 3
+        // =============================================
+        $display("\n--- PRUEBA 2: CLAVE CORRECTA ---");
+
+        ingresar_digito(4'h1);
+
+        comprobar(
+            u_dut.u_fsm.digito1 == 4'h1,
+            "Primer digito capturado"
+        );
+
+        comprobar(
+            hex0 == 7'b1111001,
+            "HEX0 muestra 1 en logica activa en bajo"
+        );
+
+        ingresar_digito(4'h2);
+
+        comprobar(
+            u_dut.u_fsm.digito2 == 4'h2,
+            "Segundo digito capturado"
+        );
+
+        comprobar(
+            (hex1 == 7'b1111001) &&
+            (hex0 == 7'b0100100),
+            "Displays muestran los digitos 12"
+        );
+
+        ingresar_digito(4'h3);
+
+        comprobar(
+            u_dut.u_fsm.estado == S_ABIERTO,
+            "Clave correcta: estado ABIERTO"
+        );
+
+        comprobar(
+            (led_verde == 1'b1) &&
+            (led_rojo == 1'b0) &&
+            (u_dut.servo_posicion == 1'b1),
+            "Caja abierta: LED verde activo"
+        );
+
+        comprobar(
+            u_dut.u_fsm.intentos_restantes == 2'd3,
+            "Clave correcta no descuenta intentos"
+        );
+
+        comprobar(
+            {hex5, hex4, hex3, hex2, hex1, hex0} ==
+            {
+                7'b1111111,
+                7'b1111111,
+                7'b1000000,
+                7'b0001100,
+                7'b0000110,
+                7'b0101011
+            },
+            "Displays muestran OPEn"
+        );
+
+        // Dar tiempo para aplicar la posicion abierta
+        // al inicio de un nuevo periodo PWM.
+        #25_000_000;
+        verificar_pwm(2_000_000);
+
+        // KEY0 no debe cerrar la caja abierta.
+        pulsar_key0;
+
+        comprobar(
+            u_dut.u_fsm.estado == S_ABIERTO,
+            "KEY0 no modifica el estado ABIERTO"
+        );
+
+        // =============================================
+        // PRUEBA 3: reinicio despues de abrir
+        // =============================================
+        $display("\n--- PRUEBA 3: REINICIO ---");
+
+        reiniciar;
+
+        comprobar(
+            (u_dut.u_fsm.estado == S_INICIO) &&
+            (u_dut.u_fsm.intentos_restantes == 2'd3) &&
+            (u_dut.servo_posicion == 1'b0) &&
+            (led_rojo == 1'b1) &&
+            (led_verde == 1'b0),
+            "Reinicio cierra y restablece tres intentos"
+        );
+
+        // =============================================
+        // PRUEBA 4: primer fallo
+        // =============================================
+        $display("\n--- PRUEBA 4: PRIMER FALLO ---");
+
+        ingresar_clave_incorrecta;
+
+        comprobar(
+            u_dut.u_fsm.estado == S_ERROR,
+            "Primer fallo: estado ERROR"
+        );
+
+        comprobar(
+            u_dut.u_fsm.intentos_restantes == 2'd2,
+            "Quedan dos intentos"
+        );
+
+        comprobar(
+            hex0 == 7'b0100100,
+            "Display muestra 2 intentos"
+        );
+
+        comprobar(
+            (led_rojo == 1'b1) &&
+            (led_verde == 1'b0) &&
+            (u_dut.servo_posicion == 1'b0),
+            "La caja permanece cerrada tras el error"
+        );
+
+        verificar_pwm(1_000_000);
+
+        // Reconocer error sin reiniciar intentos.
+        pulsar_key0;
+
+        comprobar(
+            (u_dut.u_fsm.estado == S_INICIO) &&
+            (u_dut.u_fsm.intentos_restantes == 2'd2),
+            "KEY0 permite reintentar conservando dos intentos"
+        );
+
+        // =============================================
+        // PRUEBA 5: segundo fallo
+        // =============================================
+        $display("\n--- PRUEBA 5: SEGUNDO FALLO ---");
+
+        ingresar_clave_incorrecta;
+
+        comprobar(
+            (u_dut.u_fsm.estado == S_ERROR) &&
+            (u_dut.u_fsm.intentos_restantes == 2'd1),
+            "Segundo fallo: queda un intento"
+        );
+
+        comprobar(
+            hex0 == 7'b1111001,
+            "Display muestra 1 intento"
+        );
+
+        pulsar_key0;
+
+        comprobar(
+            (u_dut.u_fsm.estado == S_INICIO) &&
+            (u_dut.u_fsm.intentos_restantes == 2'd1),
+            "Reintento conserva el ultimo intento"
+        );
+
+        // =============================================
+        // PRUEBA 6: tercer fallo y bloqueo
+        // =============================================
+        $display("\n--- PRUEBA 6: BLOQUEO ---");
+
+        ingresar_clave_incorrecta;
+
+        comprobar(
+            u_dut.u_fsm.estado == S_BLOQUEO,
+            "Tercer fallo: estado BLOQUEO"
+        );
+
+        comprobar(
+            u_dut.u_fsm.intentos_restantes == 2'd0,
+            "Cero intentos restantes"
+        );
+
+        comprobar(
+            (led_rojo == 1'b1) &&
+            (led_verde == 1'b0) &&
+            (u_dut.servo_posicion == 1'b0),
+            "Caja bloqueada permanece cerrada"
+        );
+
+        comprobar(
+            {hex5, hex4, hex3, hex2, hex1, hex0} ==
+            {
+                7'b0000011,
+                7'b1000111,
+                7'b1000000,
+                7'b1000110,
+                7'b1111111,
+                7'b1000000
+            },
+            "Displays muestran bLOC 0"
+        );
+
+        // Intentar ingresar incluso la clave correcta.
+        ingresar_digito(4'h1);
+        ingresar_digito(4'h2);
+        ingresar_digito(4'h3);
+
+        comprobar(
+            (u_dut.u_fsm.estado == S_BLOQUEO) &&
+            (u_dut.u_fsm.intentos_restantes == 2'd0) &&
+            (u_dut.servo_posicion == 1'b0),
+            "KEY0 no permite abrir durante el bloqueo"
+        );
+
+        // =============================================
+        // PRUEBA 7: reinicio maestro tras bloqueo
+        // =============================================
+        $display("\n--- PRUEBA 7: REINICIO MAESTRO ---");
+
+        reiniciar;
+
+        comprobar(
+            (u_dut.u_fsm.estado == S_INICIO) &&
+            (u_dut.u_fsm.intentos_restantes == 2'd3) &&
+            (led_rojo == 1'b1) &&
+            (led_verde == 1'b0),
+            "KEY1 elimina el bloqueo y recupera tres intentos"
+        );
+
+        // =============================================
+        // Resultado final
+        // =============================================
+        if (errores == 0) begin
+            $display("\nRESULTADO: TODAS LAS PRUEBAS PASARON.");
+            $finish;
+        end
+        else begin
+            $display(
+                "\nRESULTADO: %0d COMPROBACIONES FALLARON.",
+                errores
+            );
+            $fatal(1, "Revisar los errores indicados.");
+        end
+    end
+
+    // -------------------------------------------------
+    // Proteccion frente a una espera indefinida.
+    // Tiempo maximo: 3 segundos simulados.
+    // -------------------------------------------------
+    initial begin
+        #3_000_000_000;
+        $fatal(1, "Tiempo limite de simulacion excedido.");
+    end
+
+endmodule
+
+```
