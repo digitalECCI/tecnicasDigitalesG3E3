@@ -9,10 +9,6 @@
     * [Fabiam Acevedo]
     (https://github.com/Fabiam-Acevedo-ECCI) 
 
-
-
-# Laboratorio 7 — Proyecto final: comunicación serial UART entre FPGA y PC
-
 ## 2. Resumen
 
 El proyecto consiste en implementar un enlace de comunicación serial UART bidireccional entre una FPGA DE10-Lite y un computador. El sistema integra transmisión, recepción, temporización, conversión de datos y manejo de entradas y salidas.
@@ -278,39 +274,14 @@ La verificación debe cubrir los dos sentidos del enlace:
 
 ### 11.1 Evidencia de transmisión FPGA → PC
 
-![Simulación de la transmisión UART](evidencias/simulacion_tx.png)
-
-En esta captura se deben identificar:
-
-- El valor seleccionado en los switches.
-- La solicitud de transmisión.
-- El bit de inicio de cada carácter.
-- Los ocho bits de datos, con el menos significativo primero.
-- El bit de parada.
-- La correspondencia entre los caracteres enviados y el número seleccionado.
-
-Datos de la evidencia:
-
-- Valor seleccionado: [Valor probado].
-- Secuencia ASCII esperada: [Caracteres o bytes].
-- Resultado observado: [Descripción de la forma de onda].
+![Simulación de la transmisión UART](Evidencias/simulacion_uart.png)
 
 ### 11.2 Evidencia de recepción PC → FPGA
 
-![Simulación de la recepción UART](evidencias/simulacion_rx.png)
+![Simulación de la recepción PC-UART](Evidencias/pc_uart.png)
 
-En esta captura se deben identificar:
+![Simulación de la recepción UART](Evidencias/fpga_uart.png)
 
-- Las tramas inyectadas en RX.
-- Los caracteres reconstruidos.
-- La recepción del terminador del número.
-- El valor binario presentado en los LEDs.
-
-Datos de la evidencia:
-
-- Texto inyectado: [Número y terminador].
-- Valor binario esperado: [Patrón de diez bits].
-- Resultado observado: [Descripción de la forma de onda].
 
 ### 11.3 Valores de referencia
 
@@ -367,12 +338,8 @@ Las asignaciones físicas de los pines deben conservarse en el archivo de restri
 
 ### 12.4 Demostración
 
-[Ver video de demostración en FPGA](PEGAR_AQUI_EL_ENLACE_DEL_VIDEO)
+[Ver video de demostración en FPGA](https://youtu.be/5rPxvhwCShs?si=jeLNKndxEmU9rLR4)
 
-El video debe mostrar los dos recorridos:
-
-1. Seleccionar un valor mediante los switches y pulsar KEY0 para visualizarlo en PuTTY.
-2. Escribir un valor en PuTTY, confirmarlo con Enter y observar su representación binaria en los LEDs.
 
 | Sentido | Valor demostrado | Ubicación en el video |
 |---|---:|---|
@@ -476,29 +443,11 @@ ASCII facilita la interacción con PuTTY y permite escribir los números directa
 
 La entrega incluye:
 
-- Código fuente Verilog del sistema.
-- Testbench de simulación.
+- Código fuente Verilog del sistema, en la carpeta (Archivos_Verilog).
 - Documentación del diseño en este README.
 - Evidencias de transmisión FPGA → PC.
 - Evidencias de recepción PC → FPGA.
-- Proyecto y asignaciones de pines para la implementación.
 - Video de la demostración física en ambos sentidos.
-
-Organización sugerida:
-
-```text
-.
-├── README.md
-├── rtl/
-│   └── Archivos Verilog del sistema
-├── sim/
-│   └── Testbench y archivos de simulación
-├── quartus/
-│   └── Proyecto y asignaciones de pines
-└── evidencias/
-    ├── simulacion_tx.png
-    └── simulacion_rx.png
-```
 
 ## 16. Referencia
 
